@@ -7,8 +7,8 @@
     "start": "node dist/main",
     "test": "vitest run",
     "test:watch": "vitest",
-    "migration:run": "ts-node -r tsconfig-paths/register ./node_modules/.bin/typeorm migration:run -d src/data-source.ts",
-    "migration:generate": "ts-node -r tsconfig-paths/register ./node_modules/.bin/typeorm migration:generate -d src/data-source.ts"
+    "migration:run": "typeorm-ts-node-commonjs migration:run -d src/data-source.ts",
+    "migration:generate": "typeorm-ts-node-commonjs migration:generate -d src/data-source.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",
@@ -32,6 +32,8 @@
     "@types/node": "^20.0.0",
     "@vitest/coverage-v8": "^1.0.0",
     "supertest": "^6.3.0",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
     "typescript": "^5.0.0",
     "unplugin-swc": "^1.5.9",
     "vitest": "^1.0.0"
