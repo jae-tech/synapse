@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm --version)",
+      "Bash(npm --version)",
+      "Bash(pnpm install *)",
+      "Bash(pnpm approve-builds *)",
+      "Bash(npx nest *)",
+      "Bash(node_modules/.bin/nest build *)",
+      "Bash(node_modules/.bin/vitest run *)",
+      "Bash(pnpm add *)",
+      "Bash(Remove-Item \"C:\\\\Users\\\\heo\\\\Documents\\\\secret\\\\ai-cloud-workspace-platform\\\\apps\\\\web\\\\next.config.ts\")",
+      "Bash(curl -s -o /dev/null -w '%{http_code}' -X POST http://localhost:3011/events -H 'Content-Type: application/json' -d '{\"agentId\":\"backend\",\"type\":\"tool_use\",\"tool\":\"Edit\",\"payload\":{\"input\":\"test\",\"file\":\"src/main.ts\"},\"timestamp\":\"2026-05-21T07:31:00.000Z\",\"workspaceId\":\"default\"}')",
+      "Bash(curl -s -o /dev/null -w '%{http_code}' -X POST http://localhost:3011/events -H 'Content-Type: application/json' -d '{}')",
+      "Bash(curl -s -o /dev/null -w '%{http_code}' -X POST http://localhost:3011/events -H 'Content-Type: application/json' -d '{\"agentId\":\"invalid-agent\",\"type\":\"tool_use\",\"payload\":{},\"timestamp\":\"2026-05-21T07:31:00.000Z\"}')",
+      "Bash(curl -s -o /dev/null -w '%{http_code}' -X POST http://localhost:3011/events -H 'Content-Type: application/json' -d '{\"agentId\":\"backend\",\"type\":\"unknown_type\",\"payload\":{},\"timestamp\":\"2026-05-21T07:31:00.000Z\"}')",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3010)",
+      "Bash(curl -s -o /dev/null -X POST http://localhost:3011/events -H 'Content-Type: application/json' -d '{\"agentId\":\"__TRACKED_VAR__\",\"type\":\"status\",\"payload\":{\"content\":\"__TRACKED_VAR__ agent ready\"},\"timestamp\":\"__CMDSUB_OUTPUT__\",\"workspaceId\":\"default\"}')"
+    ]
+  }
+}
