@@ -1,0 +1,58 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #0f0f0f;
+  color: #e5e5e5;
+  min-height: 100vh;
+}
+
+@keyframes pulse-blue {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.15); }
+}
+
+@keyframes pulse-slow {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}
+
+.agent-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  transition: background-color 0.3s ease;
+}
+
+.agent-dot.idle {
+  background-color: #4a4a4a;
+}
+
+.agent-dot.working {
+  background-color: #3b82f6;
+  animation: pulse-blue 1s ease-in-out infinite;
+}
+
+.agent-dot.done {
+  background-color: #22c55e;
+}
+
+.agent-dot.error {
+  background-color: #ef4444;
+}
+
+.agent-dot.loading {
+  background-color: #6b7280;
+  animation: pulse-slow 1.5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .agent-dot.working,
+  .agent-dot.loading {
+    animation: none;
+  }
+}
