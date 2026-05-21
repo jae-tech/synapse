@@ -1,0 +1,34 @@
+{
+  "name": "@synapse/api",
+  "version": "0.1.0",
+  "scripts": {
+    "build": "nest build",
+    "dev": "nest start --watch",
+    "start": "node dist/main",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@nestjs/common": "^10.0.0",
+    "@nestjs/config": "^4.0.4",
+    "@nestjs/core": "^10.0.0",
+    "@nestjs/platform-fastify": "^10.0.0",
+    "@nestjs/platform-socket.io": "^10.0.0",
+    "@nestjs/websockets": "^10.0.0",
+    "@synapse/schemas": "workspace:*",
+    "reflect-metadata": "^0.1.13",
+    "rxjs": "^7.8.0",
+    "socket.io": "^4.7.0"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^10.0.0",
+    "@nestjs/testing": "^10.0.0",
+    "@swc/core": "^1.4.0",
+    "@types/node": "^20.0.0",
+    "@vitest/coverage-v8": "^1.0.0",
+    "supertest": "^6.3.0",
+    "typescript": "^5.0.0",
+    "unplugin-swc": "^1.5.9",
+    "vitest": "^1.0.0"
+  }
+}
