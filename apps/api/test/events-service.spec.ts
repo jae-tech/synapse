@@ -22,24 +22,16 @@ function makeEntity(id: string, agentId: string, createdAt: Date): EventEntity {
 
 describe('EventsService.getRecentEvents', () => {
   let service: EventsService;
-  let mockRepo: ReturnType<typeof vi.fn>;
+  const findMock = vi.fn();
+
+  const mockRepo = {
+    create: vi.fn((data: unknown) => data),
+    save: vi.fn().mockResolvedValue({}),
+    find: findMock,
+  };
 
   beforeEach(async () => {
     vi.clearAllMocks();
-
-    // Regression: ISSUE-004 — getRecentEvents가 최신 N개를 ASC로 반환해야 함
-    // Found by /qa on 2026-05-22
-    // Report: .gstack/qa-reports/qa-report-feature-phase-2-postgresql-2026-05-22.md
-    const old = makeEntity('e1', 'backend', new Date('2026-01-01T00:00:00Z'));
-    const mid = makeEntity('e2', 'backend', new Date('2026-01-01T01:00:00Z'));
-    const newest = makeEntity('e3', 'backend', new Date('2026-01-01T02:00:00Z'));
-
-    mockRepo = {
-      create: vi.fn((data) => data),
-      save: vi.fn().mockResolvedValue({}),
-      // DESC로 조회 → [newest, mid, old]
-      find: vi.fn().mockResolvedValue([newest, mid, old]),
-    };
 
     const module = await Test.createTestingModule({
       providers: [
@@ -52,20 +44,35 @@ describe('EventsService.getRecentEvents', () => {
     service = module.get(EventsService);
   });
 
-  it('ORDER BY DESC LIMIT → ASC로 역정렬하여 반환 (E2-2)', async () => {
+  it('ORDER BY DESC LIMIT → ASC 역정렬 반환 (E2-2)', async () => {
+    // Regression: ISSUE-004 — getRecentEvents가 최신 N개를 ASC로 반환해야 함
+    // Found by /qa on 2026-05-22
+    // Report: .gstack/qa-reports/qa-report-feature-phase-2-postgresql-2026-05-22.md
+    const old = makeEntity('e1', 'backend', new Date('2026-01-01T00:00:00Z'));
+    const mid = makeEntity('e2', 'backend', new Date('2026-01-01T01:00:00Z'));
+    const newest = makeEntity('e3', 'backend', new Date('2026-01-01T02:00:00Z'));
+
+    // DB는 DESC로 반환 (최신 → 오래된 순)
+    findMock.mockResolvedValue([newest, mid, old]);
+
     const result = await service.getRecentEvents('default', 50);
 
     // find가 DESC로 호출되었는지 확인
-    expect(mockRepo.find).toHaveBeenCalledWith(
+    expect(findMock).toHaveBeenCalledWith(
       expect.objectContaining({ order: { createdAt: 'DESC' } }),
     );
 
     // DESC → reverse() → ASC: oldest가 result[0], newest가 result[2]
-    expect(result[0].timestamp).toBe('2026-01-01T00:00:00.000Z'); // oldest 첫 번째
-    expect(result[2].timestamp).toBe('2026-01-01T02:00:00.000Z'); // newest 마지막
+    expect(result[0].timestamp).toBe('2026-01-01T00:00:00.000Z');
+    expect(result[2].timestamp).toBe('2026-01-01T02:00:00.000Z');
   });
 
   it('결과 timestamp ASC 정렬 보장', async () => {
+    const old = makeEntity('e1', 'backend', new Date('2026-01-01T00:00:00Z'));
+    const mid = makeEntity('e2', 'backend', new Date('2026-01-01T01:00:00Z'));
+    const newest = makeEntity('e3', 'backend', new Date('2026-01-01T02:00:00Z'));
+    findMock.mockResolvedValue([newest, mid, old]);
+
     const result = await service.getRecentEvents();
     for (let i = 0; i < result.length - 1; i++) {
       expect(new Date(result[i].timestamp).getTime())
