@@ -1,16 +1,39 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
+import { getRepositoryToken } from '@nestjs/typeorm';
 import supertest from 'supertest';
-import { EventsModule } from '../src/events/events.module';
+import { EventsController } from '../src/events/events.controller';
+import { EventsService } from '../src/events/events.service';
+import { EventsGateway } from '../src/events/events.gateway';
+import { EventEntity } from '../src/events/event.entity';
+
+const mockRepo = {
+  create: vi.fn((data) => data),
+  save: vi.fn().mockResolvedValue({}),
+  find: vi.fn().mockResolvedValue([]),
+};
+
+const mockServer = { emit: vi.fn() };
+const mockGateway = {
+  broadcast: vi.fn(),
+  server: mockServer,
+};
 
 describe('POST /events', () => {
   let app: NestFastifyApplication;
 
   beforeEach(async () => {
+    vi.clearAllMocks();
+
     const module: TestingModule = await Test.createTestingModule({
-      imports: [EventsModule],
+      controllers: [EventsController],
+      providers: [
+        EventsService,
+        { provide: EventsGateway, useValue: mockGateway },
+        { provide: getRepositoryToken(EventEntity), useValue: mockRepo },
+      ],
     }).compile();
 
     app = module.createNestApplication<NestFastifyApplication>(new FastifyAdapter());
@@ -22,7 +45,7 @@ describe('POST /events', () => {
     await app.close();
   });
 
-  it('유효한 이벤트 → 204', async () => {
+  it('유효한 이벤트 → 201', async () => {
     const validEvent = {
       agentId: 'backend',
       type: 'tool_use',
@@ -35,7 +58,10 @@ describe('POST /events', () => {
     await supertest(app.getHttpServer())
       .post('/events')
       .send(validEvent)
-      .expect(204);
+      .expect(201);
+
+    expect(mockRepo.save).toHaveBeenCalledTimes(1);
+    expect(mockGateway.broadcast).toHaveBeenCalledTimes(1);
   });
 
   it('빈 바디 → 400', async () => {
@@ -43,12 +69,13 @@ describe('POST /events', () => {
       .post('/events')
       .send({})
       .expect(400);
+
+    expect(mockRepo.save).not.toHaveBeenCalled();
   });
 
-  it('agentId가 임의 문자열도 허용 → 204', async () => {
-    // agentId는 z.string()으로 완화됨 (pipe-to-nestjs.js 유연성)
+  it('agentId regex 검증: backend-1 허용 → 201', async () => {
     const event = {
-      agentId: 'custom-agent',
+      agentId: 'backend-1',
       type: 'tool_use',
       payload: {},
       timestamp: new Date().toISOString(),
@@ -57,7 +84,21 @@ describe('POST /events', () => {
     await supertest(app.getHttpServer())
       .post('/events')
       .send(event)
-      .expect(204);
+      .expect(201);
+  });
+
+  it('agentId 대문자 → 400', async () => {
+    const event = {
+      agentId: 'Backend',
+      type: 'tool_use',
+      payload: {},
+      timestamp: new Date().toISOString(),
+    };
+
+    await supertest(app.getHttpServer())
+      .post('/events')
+      .send(event)
+      .expect(400);
   });
 
   it('잘못된 type → 400', async () => {
@@ -72,5 +113,23 @@ describe('POST /events', () => {
       .post('/events')
       .send(invalidEvent)
       .expect(400);
+  });
+
+  it('DB 저장 실패 → 503', async () => {
+    mockRepo.save.mockRejectedValueOnce(new Error('DB down'));
+
+    const event = {
+      agentId: 'backend',
+      type: 'tool_use',
+      payload: {},
+      timestamp: new Date().toISOString(),
+    };
+
+    await supertest(app.getHttpServer())
+      .post('/events')
+      .send(event)
+      .expect(503);
+
+    expect(mockGateway.broadcast).not.toHaveBeenCalled();
   });
 });
