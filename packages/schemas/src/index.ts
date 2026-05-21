@@ -11,7 +11,7 @@ export const AgentRoleSchema = z.enum([
 
 export const AgentEventSchema = z.object({
   id: z.string().default(() => crypto.randomUUID()),
-  agentId: z.string(),
+  agentId: z.string().min(1).max(50).regex(/^[a-z][a-z0-9-]*$/, 'agentId must be lowercase alphanumeric with hyphens'),
   type: z.enum(['tool_use', 'tool_result', 'thinking', 'status', 'file_change', 'bash', 'commit']),
   tool: z.string().optional(),
   payload: z.object({
