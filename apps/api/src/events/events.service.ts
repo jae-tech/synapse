@@ -34,11 +34,13 @@ export class EventsService {
   }
 
   async getRecentEvents(workspaceId = 'default', limit = 50): Promise<AgentEvent[]> {
+    // DESC로 최신 N개를 먼저 가져온 뒤 ASC로 역정렬하여 replay 순서 보정 (E2-2)
     const rows = await this.repo.find({
       where: { workspaceId },
-      order: { createdAt: 'ASC' },
+      order: { createdAt: 'DESC' },
       take: limit,
     });
+    rows.reverse();
 
     return rows.map((row) => ({
       id: row.id,
