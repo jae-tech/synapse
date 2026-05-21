@@ -19,7 +19,7 @@ export const AgentEventSchema = z.object({
     output: z.string().max(500).optional(),
     content: z.string().max(500).optional(),
     file: z.string().max(500).optional(),
-    command: z.string().optional(),
+    command: z.string().max(500).optional(),
   }),
   timestamp: z.string().datetime(),
   workspaceId: z.string().default('default'),

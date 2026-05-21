@@ -177,7 +177,7 @@ export function VirtualOffice() {
                 <div style={{ fontSize: '12px', color: '#444', fontStyle: 'italic' }}>이번 세션 이벤트 없음</div>
               ) : (
                 selectedEvents.map((e) => (
-                  <div key={e.id ?? `${e.agentId}-${e.timestamp}`} style={{
+                  <div key={e.id || `${e.agentId}-${e.timestamp}`} style={{
                     fontSize: '11px',
                     color: '#888',
                     borderLeft: '2px solid #222',

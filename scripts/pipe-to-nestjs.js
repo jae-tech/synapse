@@ -63,6 +63,9 @@ function enqueue(fn) {
   pending = pending.then(fn).catch(() => {});
 }
 
+// result 이벤트 수신 여부 추적 — close 핸들러가 error를 done으로 덮어쓰는 버그 방지
+let resultReceived = false;
+
 function processLine(line) {
   const trimmed = line.trim();
   if (!trimmed) return;
@@ -116,6 +119,7 @@ function processLine(line) {
       }
     }
   } else if (obj.type === 'result') {
+    resultReceived = true;
     const content = obj.is_error ? 'error' : 'done';
     enqueue(() =>
       postEvent({
@@ -132,8 +136,11 @@ function run() {
   rl.on('line', processLine);
 
   rl.on('close', () => {
-    // stdin이 닫혔을 때 done 강제 전송 (crash에 의한 유실 방지)
-    enqueue(() => postEvent({ type: 'status', payload: { content: 'done' } }));
+    // result 이벤트 없이 stdin 닫힌 경우만 done 전송 (crash 방지)
+    // result 수신 후에는 중복 전송하지 않음 — error 상태를 done으로 덮어쓰는 버그 방지
+    if (!resultReceived) {
+      enqueue(() => postEvent({ type: 'status', payload: { content: 'done' } }));
+    }
     pending.finally(() => process.exit(0));
   });
 }

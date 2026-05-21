@@ -17,7 +17,8 @@ export function useAgentSocket() {
     const socket = io(API_URL, {
       transports: ['websocket', 'polling'],
       reconnectionDelay: 1000,
-      reconnectionAttempts: Infinity,
+      reconnectionAttempts: 10,
+      reconnectionDelayMax: 30000,
     });
 
     socketRef.current = socket;
@@ -29,8 +30,20 @@ export function useAgentSocket() {
     socket.on('disconnect', () => store().setConnected(false));
     socket.on('connect_error', (err) => store().setConnectionError(err.message));
 
-    socket.on('replay', (events: AgentEvent[]) => store().setReplay(events));
-    socket.on('agent_event', (event: AgentEvent) => store().addEvent(event));
+    // replay 수신 시각 기록 — 이 시각 이전 timestamp의 live 이벤트는 무시 (경쟁 조건 방지)
+    let replayEndTimestamp = 0;
+    socket.on('replay', (events: AgentEvent[]) => {
+      store().setReplay(events);
+      // replay 배열의 마지막 이벤트 시각을 기준으로 설정
+      const last = events[events.length - 1];
+      replayEndTimestamp = last ? new Date(last.timestamp).getTime() : Date.now();
+    });
+    socket.on('agent_event', (event: AgentEvent) => {
+      // replay보다 오래된 이벤트는 UI 롤백을 유발하므로 무시
+      if (new Date(event.timestamp).getTime() >= replayEndTimestamp) {
+        store().addEvent(event);
+      }
+    });
 
     // done 후 30분 경과 시 idle로 전환 (addEvent에서 처리하지 않아 별도 처리)
     const idleTimer = setInterval(() => {
