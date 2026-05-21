@@ -1,11 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import type { AgentRole } from '@synapse/schemas';
 import { useAgentSocket } from '../lib/useAgentSocket';
-import { useAgentStore } from '../store/useAgentStore';
+import { useAgentStore, useGroupedAgents, extractRole } from '../store/useAgentStore';
 
-const AGENT_CONFIG: { role: AgentRole; label: string; room: string }[] = [
+const AGENT_CONFIG: { role: string; label: string; room: string }[] = [
   { role: 'pm', label: 'PM', room: '기획실' },
   { role: 'backend', label: 'Backend', room: '개발실' },
   { role: 'frontend', label: 'Frontend', room: '개발실' },
@@ -22,18 +21,46 @@ function formatTime(iso: string): string {
   }
 }
 
+function statusBorderColor(status: string): string {
+  if (status === 'error') return '#4a0000';
+  if (status === 'working') return '#3b82f6';
+  if (status === 'done') return '#22c55e';
+  return '#222';
+}
+
 export function VirtualOffice() {
   useAgentSocket();
 
-  const { agents, events, connected, connectionError } = useAgentStore();
-  const [selectedAgent, setSelectedAgent] = useState<AgentRole | null>(null);
+  const { events, connected, connectionError } = useAgentStore();
+  const groupedAgents = useGroupedAgents();
 
-  const activeCount = Object.values(agents).filter((a) => a.status === 'working').length;
+  // selectedAgent: role 또는 instanceId (string | null)
+  const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
+
+  const activeCount = Object.values(groupedAgents).reduce(
+    (sum, g) => sum + g.instances.filter((i) => i.status === 'working').length,
+    0,
+  );
   const hasAnyActivity = events.length > 0;
 
+  // E2-6: role 선택 시 role + 모든 인스턴스 이벤트 포함
+  const selectedRole = selectedAgent ? extractRole(selectedAgent) : null;
   const selectedEvents = selectedAgent
-    ? events.filter((e) => e.agentId === selectedAgent).slice(-50).reverse()
+    ? events
+        .filter((e) => {
+          if (!selectedRole) return false;
+          return e.agentId === selectedAgent || e.agentId.startsWith(selectedRole + '-');
+        })
+        .slice(-50)
+        .reverse()
     : [];
+
+  const selectedLabel = selectedAgent
+    ? (AGENT_CONFIG.find((a) => a.role === selectedRole)?.label ?? selectedAgent)
+    : '';
+  const logHeader = selectedAgent === selectedRole
+    ? `${selectedLabel} 로그`
+    : `${selectedAgent} 로그`;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', padding: '24px', gap: '20px' }}>
@@ -89,11 +116,14 @@ export function VirtualOffice() {
           opacity: connected ? 1 : 0.5,
           transition: 'opacity 0.3s',
         }}>
-          {/* 에이전트 그리드 — CTA보다 위에 항상 렌더 */}
+          {/* 에이전트 그리드 */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
             {AGENT_CONFIG.map(({ role, label, room }) => {
-              const agent = agents[role] ?? { status: 'idle', lastEvent: null };
-              const isSelected = selectedAgent === role;
+              const group = groupedAgents[role];
+              const summaryStatus = group?.summaryStatus ?? 'idle';
+              const isSelected = selectedAgent !== null && extractRole(selectedAgent) === role;
+              const instanceCount = group?.instances.length ?? 0;
+              const topInstance = group?.instances[0] ?? null;
 
               return (
                 <button
@@ -101,7 +131,7 @@ export function VirtualOffice() {
                   onClick={() => setSelectedAgent(isSelected ? null : role)}
                   style={{
                     background: isSelected ? '#1a1a2e' : '#111',
-                    border: `1px solid ${isSelected ? '#3b82f6' : '#222'}`,
+                    border: `1px solid ${isSelected ? '#3b82f6' : statusBorderColor(summaryStatus)}`,
                     borderRadius: '10px',
                     padding: '16px',
                     cursor: 'pointer',
@@ -112,14 +142,28 @@ export function VirtualOffice() {
                     transition: 'border-color 0.2s',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <div className={`agent-dot ${agent.status}`} />
-                    <span style={{ fontSize: '13px', fontWeight: 600, color: '#e5e5e5' }}>
-                      {label}
-                    </span>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div className={`agent-dot ${summaryStatus}`} />
+                      <span style={{ fontSize: '13px', fontWeight: 600, color: '#e5e5e5' }}>
+                        {label}
+                      </span>
+                    </div>
+                    {/* 인스턴스 배지: 2개 이상일 때만 표시 (D2-6) */}
+                    {instanceCount >= 2 && (
+                      <span style={{
+                        fontSize: '10px',
+                        background: '#1e3a5f',
+                        color: '#60a5fa',
+                        padding: '2px 6px',
+                        borderRadius: '10px',
+                      }}>
+                        ×{Math.min(instanceCount, 3)}{instanceCount > 3 ? `+${instanceCount - 3}` : ''}
+                      </span>
+                    )}
                   </div>
                   <div style={{ fontSize: '11px', color: '#555' }}>{room}</div>
-                  {agent.lastEvent ? (
+                  {topInstance?.lastEvent ? (
                     <div style={{
                       fontSize: '11px',
                       color: '#666',
@@ -127,8 +171,8 @@ export function VirtualOffice() {
                       textOverflow: 'ellipsis',
                       whiteSpace: 'nowrap',
                     }}>
-                      {agent.lastEvent.tool ?? agent.lastEvent.type}
-                      {agent.lastEvent.payload.file && ` · ${agent.lastEvent.payload.file.split('/').pop()}`}
+                      {topInstance.lastEvent.tool ?? topInstance.lastEvent.type}
+                      {topInstance.lastEvent.payload.file && ` · ${topInstance.lastEvent.payload.file.split('/').pop()}`}
                     </div>
                   ) : (
                     <div style={{ fontSize: '11px', color: '#333', fontStyle: 'italic' }}>
@@ -140,7 +184,7 @@ export function VirtualOffice() {
             })}
           </div>
 
-          {/* CTA: 활동 없을 때 그리드 아래에 표시 */}
+          {/* CTA */}
           {!hasAnyActivity && (
             <div style={{
               textAlign: 'center',
@@ -170,7 +214,7 @@ export function VirtualOffice() {
             overflow: 'hidden',
           }}>
             <div style={{ fontSize: '13px', fontWeight: 600, color: '#999' }}>
-              {AGENT_CONFIG.find((a) => a.role === selectedAgent)?.label} 로그
+              {logHeader}
             </div>
             <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '6px' }}>
               {selectedEvents.length === 0 ? (
@@ -184,9 +228,10 @@ export function VirtualOffice() {
                     paddingLeft: '8px',
                     lineHeight: '1.5',
                   }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                      <span style={{ color: '#3b82f6' }}>{e.tool ?? e.type}</span>
-                      <span style={{ color: '#444', fontSize: '10px' }}>{formatTime(e.timestamp)}</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '4px' }}>
+                      <span style={{ color: '#3b82f6', flexShrink: 0 }}>{e.tool ?? e.type}</span>
+                      <span style={{ color: '#555', fontSize: '10px', flexShrink: 0 }}>{e.agentId}</span>
+                      <span style={{ color: '#444', fontSize: '10px', flexShrink: 0 }}>{formatTime(e.timestamp)}</span>
                     </div>
                     {e.payload.file && (
                       <span style={{ color: '#555' }}>{e.payload.file}</span>
