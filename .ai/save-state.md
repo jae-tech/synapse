@@ -62,6 +62,16 @@
 - README.md: WS_REDIS_ENABLED/WS_REDIS_URL/HOST 환경변수 표 추가, Redis 서비스 URL 표시
 - AGENTS.md: Redis WebSocket 어댑터 아키텍처 섹션 추가, 환경변수 표 보강, 알려진 이슈 추가
 
+### Phase 10C 완료 항목
+- `events.gateway.ts`: `handleConnection`에서 `socket.join(workspaceId)` 추가, `broadcast()`를 `server.to(workspaceId).emit()`으로 변경, `broadcastPty(workspaceId, agentId, data)` 메서드 추가
+- `agents.controller.ts`: `onPtyData` 콜백을 `gateway.broadcastPty(workspaceId, agentId, chunk)` 호출로 변경
+- `useAgentSocket.ts`: `workspaceId` 파라미터 추가, `query: { workspaceId }` 소켓 핸드셰이크 전달, deps `[workspaceId]`로 변경 시 재연결
+- `VirtualOffice.tsx`: `useWorkspaceId()` hook 추가 (URL hash `#ws:name` 패턴), `wsInput` state, 헤더 워크스페이스 스위처 폼 UI
+- `IssueInput.tsx`: `workspaceId` prop 추가, POST /tasks body에 포함
+- `globals.css`: `.vo-ws-form`, `.vo-ws-label`, `.vo-ws-current`, `.vo-ws-input` 스타일 추가
+- `agents-run.spec.ts`: `mockGateway`에 `broadcastPty` mock + `server.to().emit()` 체인 추가
+- API 테스트 55개 전원 통과 유지
+
 ### In Progress
 - (없음)
 

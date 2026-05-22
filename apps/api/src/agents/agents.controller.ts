@@ -35,7 +35,8 @@ export class AgentsController {
       workdir,
       timeoutMs,
       onPtyData: (chunk) => {
-        this.gateway.server.emit('pty:data', { agentId, data: chunk });
+        // workspaceId room에만 PTY 스트림 전송
+        this.gateway.broadcastPty(workspaceId, agentId, chunk);
       },
     });
 

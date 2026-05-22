@@ -67,6 +67,46 @@ body {
   font-size: 14px;
 }
 
+.vo-ws-form {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #1a2030;
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  padding: 3px 8px;
+}
+
+.vo-ws-label {
+  color: var(--faint);
+  font-size: 12px;
+  user-select: none;
+}
+
+.vo-ws-current {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vo-ws-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--fg);
+  font-size: 13px;
+  width: 80px;
+  font-family: inherit;
+}
+
+.vo-ws-input::placeholder {
+  color: var(--faint);
+}
+
 .vo-conn-dot {
   width: 8px;
   height: 8px;

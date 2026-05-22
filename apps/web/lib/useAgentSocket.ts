@@ -8,7 +8,7 @@ import { useAgentStore, DONE_IDLE_TIMEOUT_MS } from '@/store/useAgentStore';
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3011';
 const IDLE_CHECK_INTERVAL_MS = 60 * 1000; // 1분마다 체크
 
-export function useAgentSocket() {
+export function useAgentSocket(workspaceId = 'default') {
   const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
@@ -21,6 +21,7 @@ export function useAgentSocket() {
     }
 
     const socket = io(API_URL, {
+      query: { workspaceId },
       transports: ['websocket', 'polling'],
       reconnectionDelay: 1000,
       reconnectionAttempts: 10,
@@ -84,5 +85,5 @@ export function useAgentSocket() {
       socketRef.current = null;
       clearInterval(idleTimer);
     };
-  }, []); // deps []로 고정 — store 함수를 직접 참조해 재연결 루프 방지
+  }, [workspaceId]); // workspaceId 변경 시 재연결 — store 함수는 직접 참조해 루프 방지
 }
