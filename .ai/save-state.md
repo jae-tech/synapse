@@ -1,6 +1,13 @@
 # Save State
 
 ### Completed
+- Phase 10D: 로컬 E2E 통합 스모크 테스트 스크립트 추가
+  - `scripts/smoke-test.mjs`: API 헬스/POST /tasks/GET /tasks/:id/Socket.IO 연결/replay/agent 이벤트 시퀀스 검증
+  - `scripts/e2e-local.sh`: Docker Compose 기동 래퍼 + API 헬스 대기 + smoke-test 실행
+  - `package.json`에 `smoke`, `smoke:skip-agent`, `e2e:local` 스크립트 추가
+  - `AGENTS.md`에 "로컬 E2E 통합 테스트" 섹션 추가 (전제조건/실행법/검증항목/예상결과)
+  - claude CLI 미설치 시 `--skip-agent` 자동 전환, API/Socket.IO만 검증 가능
+  - 실제 실행 결과: 4개 통과 (API 실행 중 환경 기준)
 - Phase 10A: `orchestrator.spec.ts` 신규 — OrchestratorService PM→서브태스크 파견 E2E 13케이스
   - PM run 정상 흐름 (서브태스크 수/agentId/prompt/workspaceId 검증)
   - ANSI escape 코드 포함 출력 파싱
