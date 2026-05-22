@@ -7,35 +7,36 @@
     "start": "node dist/main",
     "test": "vitest run",
     "test:watch": "vitest",
-    "migration:run": "typeorm-ts-node-commonjs migration:run -d src/data-source.ts",
-    "migration:generate": "typeorm-ts-node-commonjs migration:generate -d src/data-source.ts"
+    "migration:generate": "drizzle-kit generate",
+    "migration:run": "drizzle-kit migrate",
+    "migration:studio": "drizzle-kit studio"
   },
   "dependencies": {
-    "@nestjs/common": "^10.0.0",
+    "@nestjs/common": "^11.1.23",
     "@nestjs/config": "^4.0.4",
-    "@nestjs/core": "^10.0.0",
-    "@nestjs/platform-fastify": "^10.0.0",
-    "@nestjs/platform-socket.io": "^10.0.0",
-    "@nestjs/typeorm": "^11.0.1",
-    "@nestjs/websockets": "^10.0.0",
-    "@synapse/schemas": "workspace:*",
-    "pg": "^8.21.0",
-    "reflect-metadata": "^0.1.13",
-    "rxjs": "^7.8.0",
-    "socket.io": "^4.7.0",
-    "typeorm": "^1.0.0"
+    "@nestjs/core": "^11.1.23",
+    "@nestjs/platform-fastify": "^11.1.23",
+    "@nestjs/platform-socket.io": "^11.1.23",
+    "@nestjs/websockets": "^11.1.23",
+    "@synapse/schemas": "link:../../packages/schemas",
+    "drizzle-orm": "^0.45.2",
+    "postgres": "^3.4.9",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2",
+    "socket.io": "^4.8.3"
   },
   "devDependencies": {
-    "@nestjs/cli": "^10.0.0",
-    "@nestjs/testing": "^10.0.0",
-    "@swc/core": "^1.4.0",
-    "@types/node": "^20.0.0",
-    "@vitest/coverage-v8": "^1.0.0",
-    "supertest": "^6.3.0",
+    "@nestjs/cli": "^11.0.21",
+    "@nestjs/testing": "^11.1.23",
+    "@swc/core": "^1.15.33",
+    "@types/node": "^25.9.1",
+    "@vitest/coverage-v8": "^4.1.7",
+    "drizzle-kit": "^0.31.10",
+    "supertest": "^7.2.2",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
-    "typescript": "^5.0.0",
+    "typescript": "^6.0.3",
     "unplugin-swc": "^1.5.9",
-    "vitest": "^1.0.0"
+    "vitest": "^4.1.7"
   }
 }
