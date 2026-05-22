@@ -117,7 +117,7 @@ export const useAgentStore = create<AgentStore>((set, get) => ({
           doneAt: status === 'done' ? new Date(event.timestamp).getTime() : null,
         };
       }
-      return { events: events.slice(-200), agents, seenIds };
+      return { events: events.slice(-200), agents, seenIds, ptyBuffers: {} };
     }),
 }));
 

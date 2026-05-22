@@ -25,7 +25,8 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {}
 
   async handleConnection(client: Socket) {
-    const workspaceId = (client.handshake.query['workspaceId'] as string) ?? 'default';
+    const raw = client.handshake.query['workspaceId'];
+    const workspaceId = (Array.isArray(raw) ? raw[0] : raw) ?? 'default';
     // 워크스페이스별 room에 가입 — 이벤트를 해당 워크스페이스 구독자에게만 전송
     await client.join(workspaceId);
     const events = await this.service.getRecentEvents(workspaceId);

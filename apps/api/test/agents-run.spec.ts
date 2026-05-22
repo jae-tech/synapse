@@ -12,11 +12,12 @@ const mockRunner = {
   getRunningAgents: vi.fn().mockReturnValue([]),
 };
 
+const mockToEmit = vi.fn();
 const mockGateway = {
   broadcastPty: vi.fn(),
   server: {
     emit: vi.fn(),
-    to: vi.fn().mockReturnValue({ emit: vi.fn() }),
+    to: vi.fn().mockReturnValue({ emit: mockToEmit }),
   },
 };
 
@@ -91,7 +92,7 @@ describe('POST /agents/run', () => {
       .expect(400);
   });
 
-  it('PTY 청크 수신 시 gateway.server.emit(pty:data) 호출', async () => {
+  it('PTY 청크 수신 시 gateway.broadcastPty(workspaceId, agentId, chunk) 호출', async () => {
     let capturedOnPtyData: ((chunk: string) => void) | undefined;
 
     mockRunner.run.mockImplementation(async (req: { onPtyData?: (c: string) => void }) => {

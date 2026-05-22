@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { useAgentSocket } from '@/lib/useAgentSocket';
 import { useAgentStore, useGroupedAgents, extractRole } from '@/store/useAgentStore';
@@ -134,11 +134,11 @@ function useWorkspaceId(): [string, (id: string) => void] {
     return () => window.removeEventListener('hashchange', read);
   }, []);
 
-  function setWorkspaceId(id: string) {
+  const setWorkspaceId = useCallback((id: string) => {
     const normalized = id.trim() || 'default';
     window.location.hash = normalized === 'default' ? '' : `ws:${encodeURIComponent(normalized)}`;
     setWorkspaceIdState(normalized);
-  }
+  }, []);
 
   return [workspaceId, setWorkspaceId];
 }
