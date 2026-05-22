@@ -1,4 +1,4 @@
-import { Controller, Post, Body, HttpCode } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, BadRequestException } from '@nestjs/common';
 import { z } from 'zod';
 import { AgentRunnerService } from './agent-runner.service';
 import { EventsGateway } from '@/events/events.gateway';
@@ -21,7 +21,11 @@ export class AgentsController {
   @Post('run')
   @HttpCode(202)
   run(@Body() body: unknown) {
-    const { agentId, workspaceId, prompt, workdir, timeoutMs } = RunAgentBodySchema.parse(body);
+    const parsed = RunAgentBodySchema.safeParse(body);
+    if (!parsed.success) {
+      throw new BadRequestException(parsed.error.flatten());
+    }
+    const { agentId, workspaceId, prompt, workdir, timeoutMs } = parsed.data;
 
     // fire-and-forget — 202 즉시 반환 (D11)
     void this.runner.run({

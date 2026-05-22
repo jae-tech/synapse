@@ -18,7 +18,13 @@
 - `claude-adapter.spec.ts` 추가 및 API 테스트 통과 (12 passed)
 
 ### In Progress
-- Phase 4: 디자인 시스템 + UI polish (globals.css 토큰, 컴포넌트 정리, 반응형)
+- (없음)
+
+### Phase 5 완료 항목
+- `CLAUDE_BIN` 환경변수화 (`ClaudeAdapter` — 하드코딩 'claude' → `process.env.CLAUDE_BIN ?? 'claude'`)
+- `.env.example` / `apps/api/.env.example` — `CLAUDE_BIN`, `SYNAPSE_API_URL` 항목 추가
+- `AgentsController` — `safeParse` 패턴 적용 (Zod 에러 → 400 BadRequest)
+- `test/agents-run.spec.ts` 추가 — `POST /agents/run` E2E 7케이스 (29 tests all passed)
 
 ### Broken
 - 일반 `pnpm` 명령은 현재 `minimumReleaseAge` 정책이 기존 NestJS 최신 lockfile 엔트리를 막을 수 있음
@@ -26,6 +32,11 @@
 
 - Phase 3A T5: `AgentRunnerService` 구현 + `agent-runner.spec.ts` 추가 (17 passed)
 - Phase 3B: Web UI 연동 완료 (web build 성공, 10 passed)
+- Phase 4: 디자인 시스템 + UI polish 완료
+  - `globals.css` CSS 변수 토큰 시스템 (색상, 타이포, 간격, 반응형)
+  - `VirtualOffice.tsx` 인라인 style → className 전환 (BEM 패턴)
+  - `IssueInput.tsx` 포커스 상태, 에러 시각화, 모바일 터치 타겟(44px)
+  - 반응형: 768px/480px 미디어쿼리 (모바일 2열 그리드, 사이드패널 하단 배치)
 - Phase 3A T6: `AgentsModule` + `AgentsController(POST /agents/run)` + `AppModule` 통합
 - `@synapse/schemas` payload 타입 확장 (`z.record`) + agent 이벤트 타입 3종 추가
 - `EventsModule` exports 추가 (`EventsService`, `EventsGateway`)
@@ -66,3 +77,9 @@
 - `.ai/save-state.md`
 - `.ai/next-task.md`
 - `.ai/decisions.md`
+- `apps/api/src/agents/adapters/claude.adapter.ts` (CLAUDE_BIN 환경변수화)
+- `apps/api/src/agents/agents.controller.ts` (safeParse → 400)
+- `apps/api/test/agents-run.spec.ts` (신규)
+- `apps/api/.env.example`
+- `.env.example`
+- `apps/web/components/PixelOffice.tsx` (신규, VirtualOffice에서 동적 import)

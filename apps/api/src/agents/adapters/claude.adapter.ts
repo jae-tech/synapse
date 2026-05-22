@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import * as pty from 'node-pty';
 import { AgentAdapter, AgentResult, AgentRunOptions } from './agent-adapter.interface';
 
+const CLAUDE_BIN = process.env.CLAUDE_BIN ?? 'claude';
+
 @Injectable()
 export class ClaudeAdapter implements AgentAdapter {
   readonly name = 'claude';
@@ -14,7 +16,7 @@ export class ClaudeAdapter implements AgentAdapter {
       let child: pty.IPty | undefined;
 
       try {
-        child = pty.spawn('claude', ['--dangerously-skip-permissions', '-p', prompt], {
+        child = pty.spawn(CLAUDE_BIN, ['--dangerously-skip-permissions', '-p', prompt], {
           name: 'xterm-color',
           cwd: options.workdir,
           env: {
@@ -67,7 +69,7 @@ export class ClaudeAdapter implements AgentAdapter {
     return new Promise<boolean>((resolve) => {
       let child: pty.IPty | undefined;
       try {
-        child = pty.spawn('claude', ['--version'], {
+        child = pty.spawn(CLAUDE_BIN, ['--version'], {
           name: 'xterm-color',
           cwd: process.cwd(),
           env: process.env as Record<string, string>,

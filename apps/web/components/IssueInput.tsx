@@ -42,8 +42,8 @@ export function IssueInput() {
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-      <div style={{ display: 'flex', gap: '8px' }}>
+    <form onSubmit={handleSubmit} className="issue-form">
+      <div className="issue-form__row">
         <textarea
           value={issue}
           onChange={(e) => {
@@ -51,7 +51,6 @@ export function IssueInput() {
             setError(null);
           }}
           onKeyDown={(e) => {
-            // Ctrl+Enter 또는 Cmd+Enter로 제출
             if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
               e.preventDefault();
               handleSubmit(e as unknown as React.FormEvent);
@@ -60,46 +59,16 @@ export function IssueInput() {
           placeholder="구현할 이슈를 입력하세요… (Ctrl+Enter로 제출)"
           disabled={loading}
           rows={2}
-          style={{
-            flex: 1,
-            background: '#111',
-            border: `1px solid ${error ? '#4a0000' : '#2a2a2a'}`,
-            borderRadius: '8px',
-            color: '#e5e5e5',
-            fontSize: '13px',
-            padding: '10px 12px',
-            resize: 'none',
-            outline: 'none',
-            fontFamily: 'inherit',
-            lineHeight: '1.5',
-          }}
+          className={`issue-textarea${error ? ' issue-textarea--error' : ''}`}
         />
-        <button
-          type="submit"
-          disabled={loading || !issue.trim()}
-          style={{
-            background: loading ? '#1a2a4a' : '#1e3a5f',
-            border: '1px solid #2a4a7f',
-            borderRadius: '8px',
-            color: loading ? '#555' : '#60a5fa',
-            fontSize: '12px',
-            fontWeight: 600,
-            padding: '0 16px',
-            cursor: loading || !issue.trim() ? 'not-allowed' : 'pointer',
-            whiteSpace: 'nowrap',
-            transition: 'background 0.15s',
-            alignSelf: 'stretch',
-          }}
-        >
+        <button type="submit" disabled={loading || !issue.trim()} className="issue-btn">
           {loading ? '전송 중…' : '실행'}
         </button>
       </div>
 
-      {error && (
-        <div style={{ fontSize: '11px', color: '#ef4444', paddingLeft: '4px' }}>{error}</div>
-      )}
+      {error && <div className="issue-form__error">{error}</div>}
       {submitted && (
-        <div style={{ fontSize: '11px', color: '#22c55e', paddingLeft: '4px' }}>
+        <div className="issue-form__success">
           이슈가 전달됐습니다. 에이전트가 작업을 시작합니다.
         </div>
       )}
