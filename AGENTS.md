@@ -32,17 +32,19 @@ Claude Code와 Codex CLI가 이 프로젝트에서 작업할 때 지켜야 할 �
 ```
 apps/api/                NestJS API
   src/events/            POST /events, WebSocket broadcast
-  src/tasks/             POST /tasks (fire-and-forget)
+  src/tasks/             POST /tasks (fire-and-forget), GET /tasks/:id
   src/orchestrator/      PM 에이전트 호출 + 서브태스크 파견
-  src/agents/            AgentRunnerService + adapters (claude, codex)
+  src/agents/            POST /agents/run, GET /agents/status
+                         AgentRunnerService, ClaudeAdapter (node-pty)
   src/db/                Drizzle ORM, DB_TOKEN, schema.ts
   drizzle/               migration 파일
 apps/web/                Next.js UI
-  components/            IssueInput, VirtualOffice, AgentTerminal
-  store/                 Zustand (useAgentStore)
+  components/            IssueInput, VirtualOffice, PixelOffice, AgentTerminal
+  store/                 Zustand (useAgentStore, ptyBuffers)
+  lib/                   useAgentSocket (Socket.IO 클라이언트)
 packages/schemas/        공유 Zod 스키마 (@synapse/schemas)
 scripts/                 send-event.js (hooks), pipe-to-nestjs.js
-docker-compose.yml       PostgreSQL 16-alpine
+docker-compose.yml       db + api + web (멀티스테이지 Docker 빌드)
 ```
 
 ---
@@ -72,13 +74,16 @@ docker-compose.yml       PostgreSQL 16-alpine
 # 전체 의존성 설치
 pnpm install
 
-# DB 시작 (PostgreSQL)
-docker compose up -d
+# DB만 시작 (로컬 개발)
+docker compose up -d db
+
+# 풀스택 Docker 빌드 + 실행
+docker compose up --build
 
 # schemas 빌드 (최초 1회 또는 변경 시)
 pnpm --filter @synapse/schemas build
 
-# 개발 서버 전체 기동
+# 개발 서버 전체 기동 (API :3011 + Web :3010)
 pnpm dev
 
 # API만 기동 (포트 3011)
@@ -94,7 +99,7 @@ pnpm test
 pnpm --filter @synapse/api test
 
 # DB migration 실행
-pnpm --filter @synapse/api migration:run
+pnpm --config.minimumReleaseAge=0 --filter @synapse/api migration:run
 
 # DB migration 파일 생성 (스키마 변경 후)
 pnpm --filter @synapse/api migration:generate
@@ -212,8 +217,30 @@ pnpm format:check
 ### PTY 스트리밍
 
 - `node-pty.spawn()` → `onData(chunk)` → `socket.emit('pty:data', { agentId, data })`
-- 클라이언트: `pty:data` 이벤트 수신 → `xterm.js.write(data)`
+- 클라이언트: `pty:data` 이벤트 수신 → `useAgentStore.appendPty()` → `AgentTerminal` ANSI→HTML 렌더링
 - subprocess timeout: `spawn()` timeout 옵션은 동작 안 함. 반드시 `setTimeout + child.kill('SIGTERM')` → 2초 후 `child.kill()` (SIGKILL) 패턴 사용.
+- PTY 버퍼: 클라이언트에서 최근 64KB만 유지 (`appendPty`에서 `.slice(-65536)` 적용).
+
+### 에이전트 실행 경로 (POST /agents/run)
+
+1. `POST /agents/run` → Zod 검증 → `void runner.run(...)` → **202 즉시 반환**
+2. [백그라운드] `AgentRunnerService.run()` — `running` Map에 agentId 등록
+3. `eventsService.ingest({ type: 'agent:start' })` → VirtualOffice 캐릭터 즉시 활성화
+4. `ClaudeAdapter.run()` → `node-pty.spawn(CLAUDE_BIN, ['--dangerously-skip-permissions', '-p', prompt])`
+5. PTY `onData` 청크 → `gateway.server.emit('pty:data', { agentId, data })`
+6. PTY `onExit` → `running` Map에서 제거 → `agent:complete` 또는 `agent:error` 이벤트 ingest
+
+### Claude CLI 바이너리 경로
+
+- `ClaudeAdapter`는 `process.env.CLAUDE_BIN ?? 'claude'`를 사용한다.
+- Docker 환경: `docker-compose.yml`의 `api` 서비스에 `CLAUDE_BIN` 환경변수 추가.
+- 로컬: PATH에 `claude`가 있으면 별도 설정 불필요.
+
+### 에이전트 상태 추적 (GET /agents/status)
+
+- `AgentRunnerService`는 인메모리 `Map<agentId, AgentStatus>`로 실행 중인 에이전트를 추적한다.
+- 프로세스 재시작 시 초기화됨 — 영속성이 필요하면 DB 저장으로 전환 필요.
+- `GET /agents/status` → `{ running: AgentStatus[] }` 반환.
 
 ### replay 순서 보정
 
@@ -232,13 +259,12 @@ pnpm format:check
 ### 테스트 위치
 
 ```
-apps/api/test/events.spec.ts             HTTP POST /events 테스트
+apps/api/test/events.spec.ts            HTTP POST /events 테스트
 apps/api/test/events-service.spec.ts    EventsService 유닛 테스트
-apps/api/test/tasks.spec.ts             HTTP POST /tasks 테스트
-apps/api/test/orchestrator.spec.ts      OrchestratorService 유닛 테스트
+apps/api/test/tasks.spec.ts             POST /tasks + GET /tasks/:id 테스트
 apps/api/test/agent-runner.spec.ts      AgentRunnerService 유닛 테스트
-apps/api/test/claude-adapter.spec.ts    ClaudeAdapter 유닛 테스트
-apps/web/components/IssueInput.test.tsx IssueInput 컴포넌트 테스트
+apps/api/test/agents-run.spec.ts        POST /agents/run + GET /agents/status 테스트
+apps/api/test/claude-adapter.spec.ts    ClaudeAdapter (node-pty mock) 유닛 테스트
 apps/web/store/useAgentStore.test.ts    Zustand store 테스트
 packages/schemas/src/index.test.ts      Zod 스키마 테스트
 ```
@@ -275,8 +301,9 @@ const mockDb = {
 | `PORT`                   | `3011`                                                | API 서버 포트                       |
 | `DATABASE_URL`           | `postgresql://synapse:synapse@localhost:5432/synapse` | PostgreSQL 연결 URL                 |
 | `CORS_ORIGIN`            | `http://localhost:3010`                               | 허용할 CORS origin                  |
+| `CLAUDE_BIN`             | `claude` (PATH 탐색)                                  | Claude CLI 바이너리 경로            |
+| `SYNAPSE_API_URL`        | `http://localhost:3011`                               | 에이전트 → API 콜백 URL             |
 | `NEXT_PUBLIC_API_URL`    | `http://localhost:3011`                               | 브라우저에서 접속할 API URL         |
-| `SYNAPSE_API_URL`        | `http://localhost:3011`                               | hooks/pipe 스크립트용 API URL       |
 | `AGENT_ID`               | `backend`                                             | hooks 전송 시 사용할 agentId        |
 | `SYNAPSE_HOOKS_DISABLED` | `0`                                                   | `1`로 설정 시 hook 이벤트 전송 중지 |
 
@@ -289,6 +316,9 @@ const mockDb = {
 - **DB migration 후 서버 재시작**: `drizzle-kit migrate` 실행 후 반드시 API 서버를 재시작한다. Drizzle은 런타임 자동 마이그레이션을 지원하지 않는다.
 - **스키마 변경 시**: `packages/schemas`를 수정하면 `pnpm --filter @synapse/schemas build`를 먼저 실행해야 API와 Web이 변경 사항을 인식한다.
 - **node-pty (Windows)**: 네이티브 빌드가 필요하다. `windows-build-tools` 또는 Visual Studio Build Tools 설치 필요. root `package.json`의 `pnpm.onlyBuiltDependencies`에 `node-pty` 추가.
+- **node-pty (Docker/Linux)**: conpty 미사용, Linux PTY 모드로 자동 전환. Windows의 conpty 의존성 파일은 컨테이너에 불필요.
+- **CLAUDE_BIN (Docker)**: `claude` CLI는 컨테이너 이미지에 기본 포함되지 않는다. 실제 에이전트 실행이 필요하면 `apps/api/Dockerfile`을 수정해 바이너리를 포함하거나, 호스트 바이너리를 volume mount해야 한다.
+- **AgentRunnerService.running Map**: 인메모리 상태이므로 API 재시작 시 초기화된다. `GET /agents/status`는 현재 프로세스 내 실행 중인 에이전트만 반환한다.
 
 ---
 
