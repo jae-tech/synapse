@@ -1,11 +1,9 @@
-'use client';
-
 import { useEffect, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 import type { AgentEvent } from '@synapse/schemas';
 import { useAgentStore, DONE_IDLE_TIMEOUT_MS } from '@/store/useAgentStore';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3011';
+const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3011';
 const IDLE_CHECK_INTERVAL_MS = 60 * 1000; // 1분마다 체크
 
 export function useAgentSocket(workspaceId = 'default') {

@@ -1,18 +1,10 @@
-'use client';
-
 import React, { useState, useEffect, useCallback } from 'react';
-import dynamic from 'next/dynamic';
 import { useAgentSocket } from '@/lib/useAgentSocket';
 import { useAgentStore, useGroupedAgents, extractRole } from '@/store/useAgentStore';
 import { IssueInput } from './IssueInput';
+import { AgentTerminal } from './AgentTerminal';
+import { PixelOffice } from './PixelOffice';
 import type { AgentPosition } from './PixelOffice';
-
-const AgentTerminal = dynamic(() => import('./AgentTerminal').then((m) => m.AgentTerminal), {
-  ssr: false,
-});
-const PixelOffice = dynamic(() => import('./PixelOffice').then((m) => m.PixelOffice), {
-  ssr: false,
-});
 
 const AGENT_CONFIG: { role: string; label: string; emoji: string }[] = [
   { role: 'pm', label: 'PM', emoji: '🧠' },

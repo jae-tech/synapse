@@ -1,5 +1,3 @@
-'use client';
-
 import React, { useEffect, useMemo, useState } from 'react';
 
 export type AgentStatus = 'idle' | 'working' | 'done' | 'error';

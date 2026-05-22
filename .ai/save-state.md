@@ -72,6 +72,19 @@
 - `agents-run.spec.ts`: `mockGateway`에 `broadcastPty` mock + `server.to().emit()` 체인 추가
 - API 테스트 55개 전원 통과 유지
 
+### Phase 11 완료 항목
+- 프론트엔드 Next.js → React + Vite SPA로 전환
+  - `next` 의존성 제거, `@vitejs/plugin-react` 추가
+  - `vite.config.ts` 신규 (react 플러그인, `@/` 경로 별칭)
+  - `index.html` + `src/main.tsx` SPA 진입점 신규
+  - `tsconfig.json` Vite 전용으로 교체 (`vite/client` types, `ignoreDeprecations`)
+  - `package.json` 스크립트: `vite --port 3010` / `tsc -b && vite build`
+  - `'use client'` 디렉티브, `next/dynamic`, `NEXT_PUBLIC_*` 환경변수 제거
+  - `VITE_API_URL` 환경변수로 전환 (`IssueInput.tsx`, `useAgentSocket.ts`)
+  - Next.js 전용 파일 삭제: `next.config.mjs`, `next-env.d.ts`, `app/layout.tsx`, `app/page.tsx`
+  - `turbo.json` 출력 경로에서 `.next/**` 제거
+  - 빌드 성공 (503ms), 테스트 10개 전원 통과
+
 ### In Progress
 - (없음)
 
