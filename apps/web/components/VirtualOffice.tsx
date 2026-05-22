@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { useAgentSocket } from '@/lib/useAgentSocket';
 import { useAgentStore, useGroupedAgents, extractRole } from '@/store/useAgentStore';
@@ -119,14 +119,40 @@ function extractSummary(e: AgentEventLocal): string | null {
   }
 }
 
+// URL hash에서 workspaceId 파싱 — #ws:my-project → "my-project", 없으면 "default"
+function useWorkspaceId(): [string, (id: string) => void] {
+  const [workspaceId, setWorkspaceIdState] = useState('default');
+
+  useEffect(() => {
+    function read() {
+      const hash = window.location.hash;
+      const match = hash.match(/^#ws:(.+)$/);
+      setWorkspaceIdState(match ? decodeURIComponent(match[1]) : 'default');
+    }
+    read();
+    window.addEventListener('hashchange', read);
+    return () => window.removeEventListener('hashchange', read);
+  }, []);
+
+  const setWorkspaceId = useCallback((id: string) => {
+    const normalized = id.trim() || 'default';
+    window.location.hash = normalized === 'default' ? '' : `ws:${encodeURIComponent(normalized)}`;
+    setWorkspaceIdState(normalized);
+  }, []);
+
+  return [workspaceId, setWorkspaceId];
+}
+
 export function VirtualOffice() {
-  useAgentSocket();
+  const [workspaceId, setWorkspaceId] = useWorkspaceId();
+  useAgentSocket(workspaceId);
 
   const { events, connected, connectionError } = useAgentStore();
   const groupedAgents = useGroupedAgents();
 
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
   const [showTerminal, setShowTerminal] = useState(false);
+  const [wsInput, setWsInput] = useState('');
 
   const activeCount = Object.values(groupedAgents).reduce(
     (sum, g) => sum + g.instances.filter((i) => i.status === 'working').length,
@@ -169,6 +195,27 @@ export function VirtualOffice() {
           <span className="vo-logo-sub">AI Virtual Office</span>
         </h1>
         <div className="vo-header-right">
+          {/* 워크스페이스 전환 */}
+          <form
+            className="vo-ws-form"
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (wsInput.trim()) {
+                setWorkspaceId(wsInput.trim());
+                setWsInput('');
+              }
+            }}
+          >
+            <span className="vo-ws-label">ws:</span>
+            <span className="vo-ws-current">{workspaceId}</span>
+            <input
+              className="vo-ws-input"
+              value={wsInput}
+              onChange={(e) => setWsInput(e.target.value)}
+              placeholder="전환…"
+              aria-label="워크스페이스 전환"
+            />
+          </form>
           <div
             className={`vo-conn-dot ${connected ? 'vo-conn-dot--connected' : 'vo-conn-dot--disconnected'}`}
           />
@@ -238,7 +285,7 @@ export function VirtualOffice() {
 
           {/* IssueInput — 하단 고정 */}
           <div className="vo-agent-list__input">
-            <IssueInput />
+            <IssueInput workspaceId={workspaceId} />
           </div>
         </aside>
 

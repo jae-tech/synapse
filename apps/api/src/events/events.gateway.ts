@@ -25,7 +25,10 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {}
 
   async handleConnection(client: Socket) {
-    const workspaceId = (client.handshake.query['workspaceId'] as string) ?? 'default';
+    const raw = client.handshake.query['workspaceId'];
+    const workspaceId = (Array.isArray(raw) ? raw[0] : raw) ?? 'default';
+    // 워크스페이스별 room에 가입 — 이벤트를 해당 워크스페이스 구독자에게만 전송
+    await client.join(workspaceId);
     const events = await this.service.getRecentEvents(workspaceId);
     client.emit('replay', events);
   }
@@ -33,6 +36,11 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   handleDisconnect(_client: Socket) {}
 
   broadcast(event: AgentEvent) {
-    this.server.emit('agent_event', event);
+    // 해당 workspaceId room에만 broadcast — 다른 워크스페이스 클라이언트에게는 전송하지 않음
+    this.server.to(event.workspaceId).emit('agent_event', event);
+  }
+
+  broadcastPty(workspaceId: string, agentId: string, data: string) {
+    this.server.to(workspaceId).emit('pty:data', { agentId, data });
   }
 }

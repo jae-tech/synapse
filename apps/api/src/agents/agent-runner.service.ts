@@ -39,7 +39,8 @@ export class AgentRunnerService {
     const { agentId, workspaceId, prompt, workdir, timeoutMs, env, onPtyData } = req;
 
     const startedAt = new Date().toISOString();
-    this.running.set(agentId, { agentId, workspaceId, startedAt });
+    const runKey = `${workspaceId}:${agentId}`;
+    this.running.set(runKey, { agentId, workspaceId, startedAt });
 
     // spawn 직전에 agent:start 이벤트 ingest → VirtualOffice 캐릭터 즉시 활성화 (D8)
     await this.eventsService.ingest({
@@ -66,7 +67,7 @@ export class AgentRunnerService {
     try {
       const result = await this.adapter.run(prompt, options);
 
-      this.running.delete(agentId);
+      this.running.delete(runKey);
       await this.eventsService.ingest({
         id: randomUUID(),
         agentId,
@@ -78,7 +79,7 @@ export class AgentRunnerService {
 
       return result;
     } catch (err) {
-      this.running.delete(agentId);
+      this.running.delete(runKey);
       this.logger.error(`AgentRunner[${agentId}] 실패`, err);
 
       await this.eventsService

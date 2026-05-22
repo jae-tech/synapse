@@ -4,7 +4,11 @@ import { useState } from 'react';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3011';
 
-export function IssueInput() {
+interface IssueInputProps {
+  workspaceId?: string;
+}
+
+export function IssueInput({ workspaceId = 'default' }: IssueInputProps) {
   const [issue, setIssue] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -23,7 +27,7 @@ export function IssueInput() {
       const res = await fetch(`${API_URL}/tasks`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ issue: trimmed, workspaceId: 'default' }),
+        body: JSON.stringify({ issue: trimmed, workspaceId }),
       });
 
       if (!res.ok) {
