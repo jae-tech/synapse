@@ -20,6 +20,10 @@
 ### In Progress
 - (없음)
 
+### Phase 7 완료 항목
+- `README.md` 전면 재작성 — 빠른 시작, Docker Compose, API 엔드포인트 표, 환경변수 표, 기술 스택
+- `AGENTS.md` 업데이트 — Phase 5~6 신규 엔드포인트, CLAUDE_BIN, PTY 버퍼, Docker 주의사항, 에이전트 상태 추적
+
 ### Phase 5+6 완료 항목
 - `CLAUDE_BIN` 환경변수화 (`ClaudeAdapter`)
 - `AgentsController` — `safeParse` 패턴 (Zod 에러 → 400), `GET /agents/status` 추가
