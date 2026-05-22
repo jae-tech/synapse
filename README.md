@@ -1,5 +1,7 @@
 # Synapse — AI Virtual Office
 
+[![CI](https://github.com/jae-tech/synapse/actions/workflows/ci.yml/badge.svg)](https://github.com/jae-tech/synapse/actions/workflows/ci.yml)
+
 웹 UI에서 이슈를 입력하면 AI PM이 서브태스크로 분해하고, 역할별 에이전트(`claude` CLI)가 실제 코드를 작성하며, 그 과정을 픽셀아트 오피스와 실시간 터미널로 시각화하는 플랫폼.
 
 ```
