@@ -83,14 +83,15 @@ export const useAgentStore = create<AgentStore>((set, get) => ({
     set((state) => {
       // id-based dedup: replay+broadcast 경쟁조건 방지 (E2-5)
       if (state.seenIds.has(event.id)) return state;
-      const seenIds = new Set(state.seenIds);
-      seenIds.add(event.id);
+      const nextEvents = [...state.events.slice(-200), event];
+      // seenIds를 events 창에 맞게 유지해 무제한 누적 방지
+      const seenIds = new Set(nextEvents.map((e) => e.id));
 
       const status = deriveStatus(event);
       const agentPrev = state.agents[event.agentId] ?? initialAgentState();
 
       return {
-        events: [...state.events.slice(-200), event],
+        events: nextEvents,
         seenIds,
         agents: {
           ...state.agents,

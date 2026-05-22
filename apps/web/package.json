@@ -2,16 +2,15 @@
   "name": "@synapse/web",
   "version": "0.2.0.0",
   "scripts": {
-    "dev": "vite --port 3010",
+    "dev": "vite",
     "build": "tsc -b && vite build",
-    "start": "vite preview --port 3010",
+    "start": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test"
   },
   "dependencies": {
     "@synapse/schemas": "link:../../packages/schemas",
-    "@vitejs/plugin-react": "^6.0.2",
     "@xterm/addon-fit": "^0.11.0",
     "@xterm/xterm": "^6.0.0",
     "react": "^19.2.6",
@@ -23,6 +22,7 @@
     "@playwright/test": "^1.60.0",
     "@types/react": "^19.2.15",
     "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.2",
     "@vitest/coverage-v8": "^4.1.7",
     "typescript": "^6.0.3",
     "vite": "^8.0.14",

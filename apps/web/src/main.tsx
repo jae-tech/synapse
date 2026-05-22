@@ -1,9 +1,12 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import '../app/globals.css';
-import { VirtualOffice } from '../components/VirtualOffice';
+import '@/app/globals.css';
+import { VirtualOffice } from '@/components/VirtualOffice';
 
-createRoot(document.getElementById('root')!).render(
+const rootEl = document.getElementById('root');
+if (!rootEl) throw new Error('Root element #root not found in index.html');
+
+createRoot(rootEl).render(
   <React.StrictMode>
     <VirtualOffice />
   </React.StrictMode>,

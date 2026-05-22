@@ -16,23 +16,21 @@ RUN pnpm install --frozen-lockfile --config.minimumReleaseAge=0
 FROM deps AS builder
 COPY packages/schemas ./packages/schemas
 COPY apps/web ./apps/web
-ARG NEXT_PUBLIC_API_URL=http://localhost:3011
-ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ARG VITE_API_URL=http://localhost:3011
+ENV VITE_API_URL=$VITE_API_URL
 RUN pnpm --filter @synapse/schemas build 2>/dev/null || true
-ENV NEXT_OUTPUT=standalone
 RUN pnpm --filter @synapse/web build
 
-# --- 실행 레이어 (Next.js standalone) ---
+# --- 실행 레이어 (정적 파일 서버) ---
 FROM node:22-slim AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
-ENV PORT=3010
 
-COPY --from=builder /app/apps/web/.next/standalone ./
-COPY --from=builder /app/apps/web/.next/static ./apps/web/.next/static
-COPY --from=builder /app/apps/web/public ./apps/web/public
+RUN npm install -g serve@latest
+
+COPY --from=builder /app/apps/web/dist ./dist
 
 EXPOSE 3010
 
-CMD ["node", "apps/web/server.js"]
+CMD ["serve", "-s", "dist", "-l", "3010"]

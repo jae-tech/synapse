@@ -1,6 +1,5 @@
 import { useState } from 'react';
-
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3011';
+import { API_URL } from '@/lib/config';
 
 interface IssueInputProps {
   workspaceId?: string;

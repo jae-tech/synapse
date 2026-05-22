@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAgentSocket } from '@/lib/useAgentSocket';
 import { useAgentStore, useGroupedAgents, extractRole } from '@/store/useAgentStore';
 import { IssueInput } from './IssueInput';
@@ -111,6 +111,12 @@ function extractSummary(e: AgentEventLocal): string | null {
   }
 }
 
+const WORKSPACE_ID_RE = /^[a-z0-9][a-z0-9-]*$/i;
+function sanitizeWorkspaceId(raw: string): string {
+  const trimmed = raw.trim();
+  return trimmed && WORKSPACE_ID_RE.test(trimmed) ? trimmed : 'default';
+}
+
 // URL hash에서 workspaceId 파싱 — #ws:my-project → "my-project", 없으면 "default"
 function useWorkspaceId(): [string, (id: string) => void] {
   const [workspaceId, setWorkspaceIdState] = useState('default');
@@ -119,7 +125,8 @@ function useWorkspaceId(): [string, (id: string) => void] {
     function read() {
       const hash = window.location.hash;
       const match = hash.match(/^#ws:(.+)$/);
-      setWorkspaceIdState(match ? decodeURIComponent(match[1]) : 'default');
+      const raw = match ? decodeURIComponent(match[1]) : 'default';
+      setWorkspaceIdState(sanitizeWorkspaceId(raw));
     }
     read();
     window.addEventListener('hashchange', read);
@@ -127,7 +134,7 @@ function useWorkspaceId(): [string, (id: string) => void] {
   }, []);
 
   const setWorkspaceId = useCallback((id: string) => {
-    const normalized = id.trim() || 'default';
+    const normalized = sanitizeWorkspaceId(id);
     window.location.hash = normalized === 'default' ? '' : `ws:${encodeURIComponent(normalized)}`;
     setWorkspaceIdState(normalized);
   }, []);
@@ -158,12 +165,15 @@ export function VirtualOffice() {
   );
   const isMeeting = pmWorking && anySubWorking;
 
-  const agentPositions: AgentPosition[] = AGENT_CONFIG.map(({ role }) => ({
-    role,
-    status: groupedAgents[role]?.summaryStatus ?? 'idle',
-    // PM은 배포 중에 다른 에이전트들과 대화, 서브에이전트는 PM이 active일 때 만남
-    isTalking: isMeeting && (role === 'pm' || groupedAgents[role]?.summaryStatus === 'working'),
-  }));
+  const agentPositions = useMemo<AgentPosition[]>(
+    () =>
+      AGENT_CONFIG.map(({ role }) => ({
+        role,
+        status: groupedAgents[role]?.summaryStatus ?? 'idle',
+        isTalking: isMeeting && (role === 'pm' || groupedAgents[role]?.summaryStatus === 'working'),
+      })),
+    [groupedAgents, isMeeting],
+  );
 
   // 우측 패널 이벤트: 선택된 role 또는 전체 최근 이벤트
   const selectedRole_ = selectedRole ? extractRole(selectedRole) : null;

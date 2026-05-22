@@ -2,8 +2,8 @@ import { useEffect, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 import type { AgentEvent } from '@synapse/schemas';
 import { useAgentStore, DONE_IDLE_TIMEOUT_MS } from '@/store/useAgentStore';
+import { API_URL } from '@/lib/config';
 
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3011';
 const IDLE_CHECK_INTERVAL_MS = 60 * 1000; // 1분마다 체크
 
 export function useAgentSocket(workspaceId = 'default') {
@@ -11,8 +11,8 @@ export function useAgentSocket(workspaceId = 'default') {
 
   useEffect(() => {
     const store = useAgentStore.getState;
-    if (window.location.search.includes('e2e_socket_error=1')) {
-      // E2E에서 연결 실패 UI를 안정적으로 검증하기 위한 강제 분기
+    if (import.meta.env.DEV && window.location.search.includes('e2e_socket_error=1')) {
+      // E2E에서 연결 실패 UI를 안정적으로 검증하기 위한 강제 분기 (개발 빌드 전용)
       store().setConnected(false);
       store().setConnectionError('E2E forced socket error');
       return;
