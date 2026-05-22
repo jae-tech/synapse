@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { AgentEventSchema } from './index';
+import { AgentEventSchema, CreateTaskSchema, TaskSchema } from './index';
 
 function baseEvent(overrides: Record<string, unknown> = {}) {
   return {
@@ -37,5 +37,54 @@ describe('AgentEventSchema — agentId validation', () => {
 
   it('51자 → 거부', () => {
     expect(AgentEventSchema.safeParse(baseEvent({ agentId: 'a'.repeat(51) })).success).toBe(false);
+  });
+});
+
+describe('TaskSchema', () => {
+  it('유효한 task 허용', () => {
+    const result = TaskSchema.safeParse({
+      id: crypto.randomUUID(),
+      issue: '로그인 버그 수정',
+      workspaceId: 'default',
+      status: 'pending',
+      createdAt: new Date().toISOString(),
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it('빈 issue → 거부', () => {
+    expect(
+      CreateTaskSchema.safeParse({
+        issue: '',
+        workspaceId: 'default',
+      }).success,
+    ).toBe(false);
+  });
+
+  it('issue 2000자 → 허용', () => {
+    expect(
+      CreateTaskSchema.safeParse({
+        issue: 'a'.repeat(2000),
+        workspaceId: 'default',
+      }).success,
+    ).toBe(true);
+  });
+
+  it('issue 2001자 → 거부', () => {
+    expect(
+      CreateTaskSchema.safeParse({
+        issue: 'a'.repeat(2001),
+        workspaceId: 'default',
+      }).success,
+    ).toBe(false);
+  });
+
+  it('workspaceId 기본값 적용', () => {
+    const result = CreateTaskSchema.parse({
+      issue: '작업 요청',
+    });
+
+    expect(result.workspaceId).toBe('default');
   });
 });

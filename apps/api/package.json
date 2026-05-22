@@ -20,6 +20,7 @@
     "@nestjs/websockets": "^11.1.23",
     "@synapse/schemas": "link:../../packages/schemas",
     "drizzle-orm": "^0.45.2",
+    "node-pty": "^1.1.0",
     "postgres": "^3.4.9",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
@@ -37,6 +38,7 @@
     "tsconfig-paths": "^4.2.0",
     "typescript": "^6.0.3",
     "unplugin-swc": "^1.5.9",
+    "vite": "^8.0.14",
     "vitest": "^4.1.7"
   }
 }

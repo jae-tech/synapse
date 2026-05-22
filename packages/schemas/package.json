@@ -11,10 +11,11 @@
   },
   "scripts": {
     "build": "tsc",
-    "test": "vitest run"
+    "test": "vitest run src"
   },
   "devDependencies": {
     "typescript": "^6.0.3",
+    "vite": "^8.0.14",
     "vitest": "^4.1.7"
   },
   "dependencies": {

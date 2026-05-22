@@ -1,1 +1,1 @@
-onlyBuiltDependencies = ["@nestjs/core", "esbuild", "sharp"]
+onlyBuiltDependencies = ["@nestjs/core", "esbuild", "node-pty", "sharp"]
