@@ -1,16 +1,10 @@
 # Next Task
 
 ### Goal
-- Phase 8 — GitHub Actions CI 설정
-  - `.github/workflows/ci.yml` — pnpm install → test → format:check
-  - PR에 CI 배지 표시
-  - (선택) `docker compose build` smoke test
+- Phase 9 — E2E 테스트 또는 추가 기능 (미정)
+  - 후보 A: Playwright E2E (Web UI 브라우저 테스트)
+  - 후보 B: Redis pub/sub로 WebSocket 스케일아웃
+  - 후보 C: 에이전트 결과물 Git 커밋 자동화
 
 ### Requirements
-- Node.js 22, pnpm 11 캐시 설정
-- `pnpm --config.minimumReleaseAge=0` 사용 (minimumReleaseAge 정책 회피)
-- API 테스트는 PostgreSQL 없이 mock으로 실행 (DB 연결 불필요)
-
-### Warnings
-- node-pty 네이티브 빌드 — GitHub Actions Ubuntu runner에서 python3/make/g++ 사전 설치 필요
-- pnpm lockfile frozen 검사 포함 필요
+- 미정 (사용자 방향 확인 필요)

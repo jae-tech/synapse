@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: node-pty 네이티브 빌드 의존성 설치
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends python3 make g++
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: pnpm install (frozen lockfile)
+        run: pnpm install --frozen-lockfile --config.minimumReleaseAge=0
+
+      - name: schemas 빌드
+        run: pnpm --filter @synapse/schemas build
+
+      - name: 테스트
+        run: pnpm test
+
+      - name: 포맷 검사
+        run: pnpm format:check

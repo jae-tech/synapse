@@ -17,6 +17,11 @@
 - Phase 3 T4: `AgentAdapter` 인터페이스 + `ClaudeAdapter(node-pty)` 구현
 - `claude-adapter.spec.ts` 추가 및 API 테스트 통과 (12 passed)
 
+### Phase 8 완료 항목
+- `.github/workflows/ci.yml` — Node.js 22 + pnpm 11 캐시, frozen-lockfile 설치, schemas 빌드, test, format:check
+- node-pty 네이티브 빌드 deps (python3/make/g++) Ubuntu runner 사전 설치
+- `README.md` — CI 배지 추가 (GitHub Actions 링크)
+
 ### In Progress
 - (없음)
 
