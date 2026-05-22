@@ -58,6 +58,9 @@ docker compose up --build -d
 |--------|-----|
 | Web UI | http://localhost:3010 |
 | API    | http://localhost:3011 |
+| Redis  | localhost:6379 |
+
+> **Docker Compose는 Redis를 기본으로 활성화합니다** (`WS_REDIS_ENABLED=1`). 로컬 개발에서는 Redis 없이도 동작합니다 (`WS_REDIS_ENABLED` 미설정 = in-memory 모드).
 
 > **claude CLI를 컨테이너 안에서 실행하려면** `docker-compose.yml`의 `api` 서비스에 `CLAUDE_BIN` 환경변수를 추가하고, claude 바이너리가 포함된 이미지를 직접 빌드해야 합니다.
 
@@ -70,11 +73,14 @@ docker compose up --build -d
 | 변수 | 기본값 | 설명 |
 |------|--------|------|
 | `PORT` | `3011` | API 서버 포트 |
+| `HOST` | `127.0.0.1` | 바인딩 주소 (Docker: `0.0.0.0`) |
 | `DATABASE_URL` | `postgresql://synapse:synapse@localhost:5432/synapse` | PostgreSQL 연결 URL |
 | `CORS_ORIGIN` | `http://localhost:3010` | 허용할 CORS origin |
 | `CLAUDE_BIN` | `claude` (PATH 탐색) | Claude CLI 바이너리 경로 |
 | `SYNAPSE_API_URL` | `http://localhost:3011` | 에이전트 → API 콜백 URL |
 | `REPLAY_BUFFER_SIZE` | `50` | WebSocket 재연결 시 재전송할 이벤트 수 |
+| `WS_REDIS_ENABLED` | (미설정 = 비활성) | `1`로 설정 시 Redis pub/sub WebSocket 어댑터 활성화 |
+| `WS_REDIS_URL` | `redis://localhost:6379` | Redis 연결 URL (`WS_REDIS_ENABLED=1` 시 사용) |
 
 ### Web (`apps/web/.env.local`)
 
