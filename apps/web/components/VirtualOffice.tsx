@@ -1,8 +1,15 @@
 'use client';
 
-import { useState } from 'react';
-import { useAgentSocket } from '../lib/useAgentSocket';
-import { useAgentStore, useGroupedAgents, extractRole } from '../store/useAgentStore';
+import React, { useState } from 'react';
+import dynamic from 'next/dynamic';
+import { useAgentSocket } from '@/lib/useAgentSocket';
+import { useAgentStore, useGroupedAgents, extractRole } from '@/store/useAgentStore';
+import { IssueInput } from './IssueInput';
+
+// xterm.js는 SSR 불가 — 클라이언트에서만 로드
+const AgentTerminal = dynamic(() => import('./AgentTerminal').then((m) => m.AgentTerminal), {
+  ssr: false,
+});
 
 const AGENT_CONFIG: { role: string; label: string; room: string }[] = [
   { role: 'pm', label: 'PM', room: '기획실' },
@@ -13,9 +20,25 @@ const AGENT_CONFIG: { role: string; label: string; room: string }[] = [
   { role: 'devops', label: 'DevOps', room: '배포실' },
 ];
 
+function tabStyle(active: boolean): React.CSSProperties {
+  return {
+    fontSize: '11px',
+    background: active ? '#1a2a1a' : 'transparent',
+    border: `1px solid ${active ? '#22c55e33' : '#2a2a2a'}`,
+    borderRadius: '5px',
+    color: active ? '#22c55e' : '#555',
+    padding: '3px 10px',
+    cursor: 'pointer',
+  };
+}
+
 function formatTime(iso: string): string {
   try {
-    return new Date(iso).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    return new Date(iso).toLocaleTimeString('ko-KR', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
   } catch {
     return '';
   }
@@ -36,6 +59,8 @@ export function VirtualOffice() {
 
   // selectedAgent: role 또는 instanceId (string | null)
   const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
+  // 터미널 패널 표시 여부
+  const [showTerminal, setShowTerminal] = useState(false);
 
   const activeCount = Object.values(groupedAgents).reduce(
     (sum, g) => sum + g.instances.filter((i) => i.status === 'working').length,
@@ -58,12 +83,19 @@ export function VirtualOffice() {
   const selectedLabel = selectedAgent
     ? (AGENT_CONFIG.find((a) => a.role === selectedRole)?.label ?? selectedAgent)
     : '';
-  const logHeader = selectedAgent === selectedRole
-    ? `${selectedLabel} 로그`
-    : `${selectedAgent} 로그`;
+  const logHeader =
+    selectedAgent === selectedRole ? `${selectedLabel} 로그` : `${selectedAgent} 로그`;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', padding: '24px', gap: '20px' }}>
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100vh',
+        padding: '24px',
+        gap: '16px',
+      }}
+    >
       {/* 헤더 */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <h1 style={{ fontSize: '20px', fontWeight: 700, letterSpacing: '-0.02em' }}>
@@ -73,31 +105,50 @@ export function VirtualOffice() {
           </span>
         </h1>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px' }}>
-          <div style={{
-            width: '8px', height: '8px', borderRadius: '50%',
-            backgroundColor: connected ? '#22c55e' : '#4a4a4a',
-          }} />
+          <div
+            style={{
+              width: '8px',
+              height: '8px',
+              borderRadius: '50%',
+              backgroundColor: connected ? '#22c55e' : '#4a4a4a',
+            }}
+          />
           <span style={{ color: connected ? '#22c55e' : '#666' }}>
             {connected ? '연결됨' : connectionError ? '연결 실패' : '연결 중...'}
           </span>
           {activeCount > 0 && (
-            <span style={{ color: '#3b82f6', marginLeft: '8px' }}>
-              {activeCount}명 작업 중
-            </span>
+            <span style={{ color: '#3b82f6', marginLeft: '8px' }}>{activeCount}명 작업 중</span>
           )}
+          <button
+            onClick={() => setShowTerminal((v) => !v)}
+            style={{
+              marginLeft: '12px',
+              background: showTerminal ? '#1a2a1a' : 'transparent',
+              border: '1px solid #2a2a2a',
+              borderRadius: '6px',
+              color: showTerminal ? '#22c55e' : '#555',
+              fontSize: '11px',
+              padding: '3px 10px',
+              cursor: 'pointer',
+            }}
+          >
+            터미널
+          </button>
         </div>
       </div>
 
       {/* 연결 에러 배너 */}
       {connectionError && !connected && (
-        <div style={{
-          padding: '10px 14px',
-          background: '#1a0000',
-          border: '1px solid #4a0000',
-          borderRadius: '8px',
-          fontSize: '12px',
-          color: '#ef4444',
-        }}>
+        <div
+          style={{
+            padding: '10px 14px',
+            background: '#1a0000',
+            border: '1px solid #4a0000',
+            borderRadius: '8px',
+            fontSize: '12px',
+            color: '#ef4444',
+          }}
+        >
           서버 연결 실패: {connectionError}. API가 실행 중인지 확인하세요 (localhost:3011).
         </div>
       )}
@@ -105,17 +156,19 @@ export function VirtualOffice() {
       {/* 메인 영역 */}
       <div style={{ display: 'flex', gap: '20px', flex: 1, minHeight: 0 }}>
         {/* Virtual Office */}
-        <div style={{
-          flex: 1,
-          border: '1px solid #222',
-          borderRadius: '12px',
-          padding: '24px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '16px',
-          opacity: connected ? 1 : 0.5,
-          transition: 'opacity 0.3s',
-        }}>
+        <div
+          style={{
+            flex: 1,
+            border: '1px solid #222',
+            borderRadius: '12px',
+            padding: '24px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '16px',
+            opacity: connected ? 1 : 0.5,
+            transition: 'opacity 0.3s',
+          }}
+        >
           {/* 에이전트 그리드 */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
             {AGENT_CONFIG.map(({ role, label, room }) => {
@@ -142,7 +195,13 @@ export function VirtualOffice() {
                     transition: 'border-color 0.2s',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                    }}
+                  >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <div className={`agent-dot ${summaryStatus}`} />
                       <span style={{ fontSize: '13px', fontWeight: 600, color: '#e5e5e5' }}>
@@ -151,28 +210,34 @@ export function VirtualOffice() {
                     </div>
                     {/* 인스턴스 배지: 2개 이상일 때만 표시 (D2-6) */}
                     {instanceCount >= 2 && (
-                      <span style={{
-                        fontSize: '10px',
-                        background: '#1e3a5f',
-                        color: '#60a5fa',
-                        padding: '2px 6px',
-                        borderRadius: '10px',
-                      }}>
-                        ×{Math.min(instanceCount, 3)}{instanceCount > 3 ? `+${instanceCount - 3}` : ''}
+                      <span
+                        style={{
+                          fontSize: '10px',
+                          background: '#1e3a5f',
+                          color: '#60a5fa',
+                          padding: '2px 6px',
+                          borderRadius: '10px',
+                        }}
+                      >
+                        ×{Math.min(instanceCount, 3)}
+                        {instanceCount > 3 ? `+${instanceCount - 3}` : ''}
                       </span>
                     )}
                   </div>
                   <div style={{ fontSize: '11px', color: '#555' }}>{room}</div>
                   {topInstance?.lastEvent ? (
-                    <div style={{
-                      fontSize: '11px',
-                      color: '#666',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}>
+                    <div
+                      style={{
+                        fontSize: '11px',
+                        color: '#666',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
                       {topInstance.lastEvent.tool ?? topInstance.lastEvent.type}
-                      {topInstance.lastEvent.payload.file && ` · ${topInstance.lastEvent.payload.file.split('/').pop()}`}
+                      {topInstance.lastEvent.payload['file'] &&
+                        ` · ${String(topInstance.lastEvent.payload['file']).split('/').pop()}`}
                     </div>
                   ) : (
                     <div style={{ fontSize: '11px', color: '#333', fontStyle: 'italic' }}>
@@ -186,67 +251,152 @@ export function VirtualOffice() {
 
           {/* CTA */}
           {!hasAnyActivity && (
-            <div style={{
-              textAlign: 'center',
-              color: '#555',
-              fontSize: '13px',
-              lineHeight: '1.6',
-              padding: '12px',
-              border: '1px dashed #2a2a2a',
-              borderRadius: '8px',
-            }}>
-              에이전트들이 대기 중입니다.<br />
+            <div
+              style={{
+                textAlign: 'center',
+                color: '#555',
+                fontSize: '13px',
+                lineHeight: '1.6',
+                padding: '12px',
+                border: '1px dashed #2a2a2a',
+                borderRadius: '8px',
+              }}
+            >
+              에이전트들이 대기 중입니다.
+              <br />
               Claude Code를 실행하면 작업이 시작됩니다.
             </div>
           )}
         </div>
 
-        {/* 이벤트 로그 패널 */}
-        {selectedAgent && (
-          <div style={{
-            width: '320px',
-            border: '1px solid #222',
-            borderRadius: '12px',
-            padding: '16px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '8px',
-            overflow: 'hidden',
-          }}>
-            <div style={{ fontSize: '13px', fontWeight: 600, color: '#999' }}>
-              {logHeader}
-            </div>
-            <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              {selectedEvents.length === 0 ? (
-                <div style={{ fontSize: '12px', color: '#444', fontStyle: 'italic' }}>이번 세션 이벤트 없음</div>
-              ) : (
-                selectedEvents.map((e) => (
-                  <div key={e.id || `${e.agentId}-${e.timestamp}`} style={{
-                    fontSize: '11px',
-                    color: '#888',
-                    borderLeft: '2px solid #222',
-                    paddingLeft: '8px',
-                    lineHeight: '1.5',
-                  }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '4px' }}>
-                      <span style={{ color: '#3b82f6', flexShrink: 0 }}>{e.tool ?? e.type}</span>
-                      <span style={{ color: '#555', fontSize: '10px', flexShrink: 0 }}>{e.agentId}</span>
-                      <span style={{ color: '#444', fontSize: '10px', flexShrink: 0 }}>{formatTime(e.timestamp)}</span>
-                    </div>
-                    {e.payload.file && (
-                      <span style={{ color: '#555' }}>{e.payload.file}</span>
-                    )}
-                    {e.payload.input && (
-                      <div style={{ color: '#555', marginTop: '2px' }}>
-                        {e.payload.input.slice(0, 80)}{e.payload.input.length > 80 && '…'}
-                      </div>
-                    )}
+        {/* 우측 패널 — 이벤트 로그 또는 터미널 */}
+        {(selectedAgent || showTerminal) && (
+          <div
+            style={{
+              width: '340px',
+              border: '1px solid #222',
+              borderRadius: '12px',
+              padding: '16px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '8px',
+              overflow: 'hidden',
+            }}
+          >
+            {showTerminal && selectedAgent ? (
+              // 터미널 + 이벤트 로그 탭
+              <>
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '4px' }}>
+                  <button onClick={() => setShowTerminal(false)} style={tabStyle(false)}>
+                    이벤트
+                  </button>
+                  <button onClick={() => setShowTerminal(true)} style={tabStyle(true)}>
+                    터미널
+                  </button>
+                </div>
+                <AgentTerminal agentId={selectedAgent} />
+              </>
+            ) : showTerminal && !selectedAgent ? (
+              <div
+                style={{ fontSize: '12px', color: '#444', fontStyle: 'italic', paddingTop: '8px' }}
+              >
+                에이전트를 클릭하면 PTY 터미널이 표시됩니다.
+              </div>
+            ) : (
+              // 이벤트 로그
+              <>
+                <div
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+                >
+                  <div style={{ fontSize: '13px', fontWeight: 600, color: '#999' }}>
+                    {logHeader}
                   </div>
-                ))
-              )}
-            </div>
+                  <button
+                    onClick={() => setShowTerminal(true)}
+                    style={{
+                      fontSize: '10px',
+                      color: '#555',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      padding: '2px 6px',
+                    }}
+                  >
+                    터미널 보기
+                  </button>
+                </div>
+                <div
+                  style={{
+                    flex: 1,
+                    overflowY: 'auto',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '6px',
+                  }}
+                >
+                  {selectedEvents.length === 0 ? (
+                    <div style={{ fontSize: '12px', color: '#444', fontStyle: 'italic' }}>
+                      이번 세션 이벤트 없음
+                    </div>
+                  ) : (
+                    selectedEvents.map((e) => (
+                      <div
+                        key={e.id || `${e.agentId}-${e.timestamp}`}
+                        style={{
+                          fontSize: '11px',
+                          color: '#888',
+                          borderLeft: '2px solid #222',
+                          paddingLeft: '8px',
+                          lineHeight: '1.5',
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'baseline',
+                            gap: '4px',
+                          }}
+                        >
+                          <span style={{ color: '#3b82f6', flexShrink: 0 }}>
+                            {e.tool ?? e.type}
+                          </span>
+                          <span style={{ color: '#555', fontSize: '10px', flexShrink: 0 }}>
+                            {e.agentId}
+                          </span>
+                          <span style={{ color: '#444', fontSize: '10px', flexShrink: 0 }}>
+                            {formatTime(e.timestamp)}
+                          </span>
+                        </div>
+                        {e.payload['file'] && (
+                          <span style={{ color: '#555' }}>{String(e.payload['file'])}</span>
+                        )}
+                        {e.payload['input'] && (
+                          <div style={{ color: '#555', marginTop: '2px' }}>
+                            {String(e.payload['input']).slice(0, 80)}
+                            {String(e.payload['input']).length > 80 && '…'}
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </>
+            )}
           </div>
         )}
+      </div>
+
+      {/* IssueInput — 하단 고정 */}
+      <div
+        style={{
+          border: '1px solid #222',
+          borderRadius: '12px',
+          padding: '14px 16px',
+          background: '#0a0a0a',
+        }}
+      >
+        <IssueInput />
       </div>
     </div>
   );

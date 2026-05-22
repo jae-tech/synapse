@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { IPty } from 'node-pty';
-import { ClaudeAdapter } from '../src/agents/adapters/claude.adapter';
+import { ClaudeAdapter } from '@/agents/adapters/claude.adapter';
 
 type ExitHandler = (e: { exitCode: number; signal?: number }) => void;
 type DataHandler = (chunk: string) => void;

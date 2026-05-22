@@ -3,10 +3,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import supertest from 'supertest';
-import { EventsController } from '../src/events/events.controller';
-import { EventsService } from '../src/events/events.service';
-import { EventsGateway } from '../src/events/events.gateway';
-import { DB_TOKEN } from '../src/db/index';
+import { EventsController } from '@/events/events.controller';
+import { EventsService } from '@/events/events.service';
+import { EventsGateway } from '@/events/events.gateway';
+import { DB_TOKEN } from '@/db/index';
 
 function makeSelectChain(resolvedValue: unknown[] = []) {
   const chain = {
@@ -70,20 +70,14 @@ describe('POST /events', () => {
       workspaceId: 'default',
     };
 
-    await supertest(app.getHttpServer())
-      .post('/events')
-      .send(validEvent)
-      .expect(201);
+    await supertest(app.getHttpServer()).post('/events').send(validEvent).expect(201);
 
     expect(mockDb.insert).toHaveBeenCalledTimes(1);
     expect(mockGateway.broadcast).toHaveBeenCalledTimes(1);
   });
 
   it('빈 바디 → 400', async () => {
-    await supertest(app.getHttpServer())
-      .post('/events')
-      .send({})
-      .expect(400);
+    await supertest(app.getHttpServer()).post('/events').send({}).expect(400);
 
     expect(mockDb.insert).not.toHaveBeenCalled();
   });
@@ -96,10 +90,7 @@ describe('POST /events', () => {
       timestamp: new Date().toISOString(),
     };
 
-    await supertest(app.getHttpServer())
-      .post('/events')
-      .send(event)
-      .expect(201);
+    await supertest(app.getHttpServer()).post('/events').send(event).expect(201);
   });
 
   it('agentId 대문자 → 400', async () => {
@@ -110,10 +101,7 @@ describe('POST /events', () => {
       timestamp: new Date().toISOString(),
     };
 
-    await supertest(app.getHttpServer())
-      .post('/events')
-      .send(event)
-      .expect(400);
+    await supertest(app.getHttpServer()).post('/events').send(event).expect(400);
   });
 
   it('잘못된 type → 400', async () => {
@@ -124,10 +112,7 @@ describe('POST /events', () => {
       timestamp: new Date().toISOString(),
     };
 
-    await supertest(app.getHttpServer())
-      .post('/events')
-      .send(invalidEvent)
-      .expect(400);
+    await supertest(app.getHttpServer()).post('/events').send(invalidEvent).expect(400);
   });
 
   it('DB 저장 실패 → 503', async () => {
@@ -142,10 +127,7 @@ describe('POST /events', () => {
       timestamp: new Date().toISOString(),
     };
 
-    await supertest(app.getHttpServer())
-      .post('/events')
-      .send(event)
-      .expect(503);
+    await supertest(app.getHttpServer()).post('/events').send(event).expect(503);
 
     expect(mockGateway.broadcast).not.toHaveBeenCalled();
   });

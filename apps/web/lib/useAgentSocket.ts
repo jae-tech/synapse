@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 import type { AgentEvent } from '@synapse/schemas';
-import { useAgentStore, DONE_IDLE_TIMEOUT_MS } from '../store/useAgentStore';
+import { useAgentStore, DONE_IDLE_TIMEOUT_MS } from '@/store/useAgentStore';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3011';
 const IDLE_CHECK_INTERVAL_MS = 60 * 1000; // 1분마다 체크
@@ -45,11 +45,18 @@ export function useAgentSocket() {
       }
     });
 
+    socket.on('pty:data', ({ agentId, data }: { agentId: string; data: string }) => {
+      store().appendPty(agentId, data);
+    });
+
     // done 후 30분 경과 시 idle로 전환 (addEvent에서 처리하지 않아 별도 처리)
     const idleTimer = setInterval(() => {
       const now = Date.now();
       const { agents } = store();
-      const updates: Record<string, { status: 'idle'; lastEvent: typeof agents[string]['lastEvent']; doneAt: null }> = {};
+      const updates: Record<
+        string,
+        { status: 'idle'; lastEvent: (typeof agents)[string]['lastEvent']; doneAt: null }
+      > = {};
       for (const [id, agent] of Object.entries(agents)) {
         if (
           agent.status === 'done' &&
