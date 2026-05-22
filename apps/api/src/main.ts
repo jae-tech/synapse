@@ -32,8 +32,8 @@ async function bootstrap() {
   }
 
   const port = parseInt(process.env.PORT ?? '3011', 10);
-  // 127.0.0.1: 로컬 전용 도구 — 외부 네트워크 노출 차단
-  await app.listen(port, '127.0.0.1');
+  const host = process.env.HOST ?? '127.0.0.1';
+  await app.listen(port, host);
   console.log(`Synapse API listening on http://localhost:${port}`);
 }
 

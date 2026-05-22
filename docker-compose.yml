@@ -39,6 +39,7 @@ services:
       DATABASE_URL: postgresql://synapse:synapse@db:5432/synapse
       CORS_ORIGIN: http://localhost:3010
       SYNAPSE_API_URL: http://api:3011
+      HOST: "0.0.0.0"
       WS_REDIS_ENABLED: "1"
       WS_REDIS_URL: redis://redis:6379
       # Claude CLI 바이너리 경로 — 컨테이너에 claude CLI가 설치된 경우 설정
