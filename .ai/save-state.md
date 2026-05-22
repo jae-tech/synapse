@@ -1,6 +1,13 @@
 # Save State
 
 ### Completed
+- Phase 10A: `orchestrator.spec.ts` 신규 — OrchestratorService PM→서브태스크 파견 E2E 13케이스
+  - PM run 정상 흐름 (서브태스크 수/agentId/prompt/workspaceId 검증)
+  - ANSI escape 코드 포함 출력 파싱
+  - 앞뒤 텍스트 혼재 시 JSON 배열 추출
+  - PM 실패 경로 4케이스 (throw/JSON 없음/빈 배열/파싱 오류)
+  - 서브태스크 부분 실패/전부 실패 시 dispatch가 resolve되는 것 검증
+- API 테스트 55개 전원 통과 (기존 42 + 신규 13)
 - 후보 B 1차 구현 완료: Redis pub/sub Socket.IO adapter 도입 (`WS_REDIS_ENABLED` 기반 조건부 활성화)
 - `RedisIoAdapter` 추가 및 Nest bootstrap에서 Redis 연결/종료 훅 처리
 - `docker-compose.yml`에 `redis` 서비스 추가, API에서 Redis adapter 기본 활성화 구성
