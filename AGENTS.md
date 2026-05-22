@@ -242,6 +242,14 @@ pnpm format:check
 - 프로세스 재시작 시 초기화됨 — 영속성이 필요하면 DB 저장으로 전환 필요.
 - `GET /agents/status` → `{ running: AgentStatus[] }` 반환.
 
+### WebSocket 어댑터 — Redis pub/sub (스케일아웃)
+
+- `WS_REDIS_ENABLED=1` 설정 시 `RedisIoAdapter`(`@socket.io/redis-adapter`)를 사용한다.
+- API 인스턴스가 여러 개일 때 각 인스턴스의 `server.emit()`이 Redis를 통해 다른 인스턴스로 전파된다.
+- 미설정 또는 `WS_REDIS_ENABLED` ≠ `1`이면 기본 in-memory 어댑터로 폴백 — 단일 서버 개발 환경에서 Redis 없이도 동작.
+- `apps/api/src/events/redis-io.adapter.ts` 구현. NestJS shutdown hook + Fastify `onClose` 훅으로 연결 해제.
+- Docker Compose에서는 `redis:7-alpine` 서비스가 자동 기동되고 API가 `WS_REDIS_ENABLED=1`로 연결된다.
+
 ### replay 순서 보정
 
 `ORDER BY created_at DESC LIMIT 50` 으로 최신 N개를 가져온 뒤, in-memory `reverse()`로 ASC 순서를 복원한다. `ASC LIMIT`은 오래된 50개를 반환하므로 사용하지 않는다.
@@ -265,6 +273,7 @@ apps/api/test/tasks.spec.ts             POST /tasks + GET /tasks/:id 테스트
 apps/api/test/agent-runner.spec.ts      AgentRunnerService 유닛 테스트
 apps/api/test/agents-run.spec.ts        POST /agents/run + GET /agents/status 테스트
 apps/api/test/claude-adapter.spec.ts    ClaudeAdapter (node-pty mock) 유닛 테스트
+apps/api/test/redis-io-adapter.spec.ts  RedisIoAdapter 유닛 테스트 + WS_REDIS_ENABLED 분기 테스트
 apps/web/store/useAgentStore.test.ts    Zustand store 테스트
 packages/schemas/src/index.test.ts      Zod 스키마 테스트
 ```
@@ -298,14 +307,17 @@ const mockDb = {
 
 | 변수                     | 기본값                                                | 설명                                |
 | ------------------------ | ----------------------------------------------------- | ----------------------------------- |
-| `PORT`                   | `3011`                                                | API 서버 포트                       |
-| `DATABASE_URL`           | `postgresql://synapse:synapse@localhost:5432/synapse` | PostgreSQL 연결 URL                 |
-| `CORS_ORIGIN`            | `http://localhost:3010`                               | 허용할 CORS origin                  |
-| `CLAUDE_BIN`             | `claude` (PATH 탐색)                                  | Claude CLI 바이너리 경로            |
-| `SYNAPSE_API_URL`        | `http://localhost:3011`                               | 에이전트 → API 콜백 URL             |
-| `NEXT_PUBLIC_API_URL`    | `http://localhost:3011`                               | 브라우저에서 접속할 API URL         |
-| `AGENT_ID`               | `backend`                                             | hooks 전송 시 사용할 agentId        |
-| `SYNAPSE_HOOKS_DISABLED` | `0`                                                   | `1`로 설정 시 hook 이벤트 전송 중지 |
+| `PORT`                   | `3011`                                                | API 서버 포트                                              |
+| `HOST`                   | `127.0.0.1`                                           | 바인딩 주소 (Docker 컨테이너: `0.0.0.0`)                   |
+| `DATABASE_URL`           | `postgresql://synapse:synapse@localhost:5432/synapse` | PostgreSQL 연결 URL                                        |
+| `CORS_ORIGIN`            | `http://localhost:3010`                               | 허용할 CORS origin                                         |
+| `CLAUDE_BIN`             | `claude` (PATH 탐색)                                  | Claude CLI 바이너리 경로                                   |
+| `SYNAPSE_API_URL`        | `http://localhost:3011`                               | 에이전트 → API 콜백 URL                                    |
+| `NEXT_PUBLIC_API_URL`    | `http://localhost:3011`                               | 브라우저에서 접속할 API URL                                |
+| `AGENT_ID`               | `backend`                                             | hooks 전송 시 사용할 agentId                               |
+| `SYNAPSE_HOOKS_DISABLED` | `0`                                                   | `1`로 설정 시 hook 이벤트 전송 중지                        |
+| `WS_REDIS_ENABLED`       | (미설정 = 비활성)                                     | `1`로 설정 시 Redis pub/sub Socket.IO 어댑터 활성화        |
+| `WS_REDIS_URL`           | `redis://localhost:6379`                              | Redis 연결 URL (`WS_REDIS_ENABLED=1` 시 사용)              |
 
 ---
 
@@ -319,6 +331,8 @@ const mockDb = {
 - **node-pty (Docker/Linux)**: conpty 미사용, Linux PTY 모드로 자동 전환. Windows의 conpty 의존성 파일은 컨테이너에 불필요.
 - **CLAUDE_BIN (Docker)**: `claude` CLI는 컨테이너 이미지에 기본 포함되지 않는다. 실제 에이전트 실행이 필요하면 `apps/api/Dockerfile`을 수정해 바이너리를 포함하거나, 호스트 바이너리를 volume mount해야 한다.
 - **AgentRunnerService.running Map**: 인메모리 상태이므로 API 재시작 시 초기화된다. `GET /agents/status`는 현재 프로세스 내 실행 중인 에이전트만 반환한다.
+- **Redis WebSocket (Docker)**: Docker Compose 환경에서는 `HOST=0.0.0.0`이 필요하다. 기본값 `127.0.0.1`은 컨테이너 내부 loopback만 바인딩해 외부에서 도달 불가.
+- **Redis 연결 실패 시**: `WS_REDIS_ENABLED=1`인데 Redis가 기동되지 않으면 API bootstrap이 실패한다. 단일 서버 환경에서는 `WS_REDIS_ENABLED` 미설정을 권장.
 
 ---
 

@@ -39,9 +39,17 @@
 - node-pty 네이티브 빌드 deps (python3/make/g++) Ubuntu runner 사전 설치
 - `README.md` — CI 배지 추가 (GitHub Actions 링크)
 
+### Phase 9B 완료 항목
+- `redis-io-adapter.spec.ts` 신규: RedisIoAdapter 유닛 8케이스 (connect/close/createIOServer/fallback 분기)
+- `WS_REDIS_ENABLED` 환경변수 분기 테스트 추가 (활성/비활성 두 케이스)
+- API 테스트 42개 전원 통과 (34 기존 + 8 신규)
+- `main.ts` HOST 환경변수화 (127.0.0.1 하드코딩 → Docker 환경에서 0.0.0.0 주입 가능)
+- `docker-compose.yml` api 서비스에 `HOST=0.0.0.0` 추가
+- README.md: WS_REDIS_ENABLED/WS_REDIS_URL/HOST 환경변수 표 추가, Redis 서비스 URL 표시
+- AGENTS.md: Redis WebSocket 어댑터 아키텍처 섹션 추가, 환경변수 표 보강, 알려진 이슈 추가
+
 ### In Progress
-- 레퍼런스 대비 픽셀 오피스 내부 디테일 미세 조정 (가구 비율, 텍스트 위치, 창문/벽면 디테일)
-- Redis adapter 멀티 인스턴스 실제 통합 smoke 검증 (2개 API 프로세스 교차 broadcast 확인)
+- (없음)
 
 ### Phase 7 완료 항목
 - `README.md` 전면 재작성 — 빠른 시작, Docker Compose, API 엔드포인트 표, 환경변수 표, 기술 스택
