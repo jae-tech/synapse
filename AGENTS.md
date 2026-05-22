@@ -336,6 +336,85 @@ const mockDb = {
 
 ---
 
+## 로컬 E2E 통합 테스트 (smoke test)
+
+`scripts/smoke-test.mjs`와 `scripts/e2e-local.sh`는 실제 API + Socket.IO 연결을 사용해 전체 흐름을 검증한다. CI에는 포함되지 않는다 — 로컬 또는 Docker 환경에서 수동으로 실행한다.
+
+### 전제 조건
+
+| 항목 | 필수 | 설명 |
+|------|------|------|
+| Node.js 18+ | 필수 | `node --version` 확인 |
+| Docker | `e2e-local.sh`만 | db + redis + api 컨테이너 기동 |
+| claude CLI | 선택 | 미설치 시 `--skip-agent`로 API/Socket만 검증 |
+
+claude CLI 설치:
+```bash
+npm install -g @anthropic-ai/claude-code
+claude --version  # 확인
+```
+
+### 실행 방법
+
+```bash
+# 방법 1: Docker Compose로 전체 스택 기동 + 검증 (권장)
+pnpm e2e:local
+
+# 방법 2: 이미 실행 중인 API에 대해 검증만 실행
+pnpm smoke
+
+# 방법 3: Socket.IO 이벤트 대기 없이 빠른 API 확인만
+pnpm smoke:skip-agent
+
+# 방법 4: 직접 실행 (옵션 조합)
+node scripts/smoke-test.mjs --url http://localhost:3011 --timeout 60
+bash scripts/e2e-local.sh --skip-agent --keep   # 컨테이너 유지
+bash scripts/e2e-local.sh --skip-docker         # 이미 실행 중인 API 사용
+```
+
+### 검증 항목
+
+| 단계 | 검증 내용 | claude CLI 필요 |
+|------|-----------|----------------|
+| API 헬스 | `GET /agents/status` → 200 | 아니오 |
+| 태스크 제출 | `POST /tasks` → 202 + id | 아니오 |
+| 태스크 조회 | `GET /tasks/:id` → 200 | 아니오 |
+| Socket.IO 연결 | websocket handshake 성공 | 아니오 |
+| replay 수신 | 연결 시 최근 이벤트 일괄 수신 | 아니오 |
+| agent:start | PM 에이전트 시작 이벤트 | 예 |
+| pty:data | PTY 터미널 출력 스트리밍 | 예 |
+| agent:complete/error | 에이전트 종료 이벤트 | 예 |
+
+### claude CLI 미설치 시 예상 결과
+
+```
+✓ API 헬스 체크 — GET /agents/status 200
+✓ POST /tasks → 202 (id: ...)
+✓ GET /tasks/:id → 200 (status: pending)
+✓ Socket.IO 연결 성공
+✓ Socket.IO replay 수신 (N개 이벤트)
+ℹ agent:error — agentId: pm (claude CLI 미설치 시 정상)
+ℹ pty:data 미수신 — claude CLI 연동 전 정상
+결과: 4개 통과 / 0개 실패
+```
+
+### 실제 claude CLI 연동 시 예상 결과
+
+```
+✓ API 헬스 체크
+✓ POST /tasks → 202
+✓ GET /tasks/:id → 200
+✓ Socket.IO 연결 성공
+✓ Socket.IO replay 수신
+✓ agent:start — agentId: pm
+ℹ pty:data 5청크 수신 중...
+✓ pty:data 스트리밍 (N청크 수신)
+✓ agent:complete|agent:error 이벤트 수신
+결과: 7개 통과 / 0개 실패
+```
+
+---
+
 ## 워크스페이스 상태 관리 (.ai/)
 
 의미 있는 구현 작업을 마칠 때마다 반드시 `.ai/` 상태 파일을 업데이트한다.

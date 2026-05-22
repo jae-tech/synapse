@@ -6,7 +6,10 @@
     "build": "turbo run build",
     "test": "turbo run test",
     "format": "prettier --write \"apps/**/*.{ts,tsx,js,mjs}\" \"packages/**/*.ts\"",
-    "format:check": "prettier --check \"apps/**/*.{ts,tsx,js,mjs}\" \"packages/**/*.ts\""
+    "format:check": "prettier --check \"apps/**/*.{ts,tsx,js,mjs}\" \"packages/**/*.ts\"",
+    "smoke": "node scripts/smoke-test.mjs",
+    "smoke:skip-agent": "node scripts/smoke-test.mjs --skip-agent",
+    "e2e:local": "bash scripts/e2e-local.sh"
   },
   "devDependencies": {
     "prettier": "^3.8.3",
