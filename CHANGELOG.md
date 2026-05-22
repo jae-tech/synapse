@@ -2,6 +2,17 @@
 
 All notable changes to Synapse are documented here.
 
+## [0.2.0.1] - 2026-05-22
+
+### Added
+
+- **AGENTS.md** — Claude Code와 Codex CLI가 공통으로 읽는 프로젝트 규칙 파일 신설. 기존 CLAUDE.md 내용 통합 + Phase 3 아키텍처 결정사항(node-pty, fire-and-forget, PTY 스트리밍 등) 반영.
+- **.ai/ 상태 관리 디렉터리** — `save-state.md`, `next-task.md`, `decisions.md`로 구현 진행 상태를 추적하는 디렉터리 신설. 에이전트가 작업 후 반드시 업데이트해야 하는 규칙 포함.
+
+### Changed
+
+- **CLAUDE.md 간소화** — 프로젝트 규칙을 AGENTS.md로 이전. CLAUDE.md는 Claude Code 전용 Skill routing만 유지.
+
 ## [0.2.0.0] - 2026-05-22
 
 ### Added
