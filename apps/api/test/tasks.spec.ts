@@ -7,8 +7,10 @@ import { TasksController } from '@/tasks/tasks.controller';
 import { TasksService } from '@/tasks/tasks.service';
 import { OrchestratorService } from '@/orchestrator/orchestrator.service';
 
+const VALID_UUID = 'a1b2c3d4-e5f6-4789-abcd-ef0123456789';
+
 const mockTask = {
-  id: 'aaaaaaaa-0000-0000-0000-000000000001',
+  id: VALID_UUID,
   issue: '로그인 기능 구현',
   workspaceId: 'default',
   status: 'pending',
@@ -18,6 +20,7 @@ const mockTask = {
 
 const mockTasksService = {
   create: vi.fn().mockResolvedValue(mockTask),
+  findById: vi.fn().mockResolvedValue(mockTask),
 };
 
 const mockOrchestrator = {
@@ -80,5 +83,52 @@ describe('POST /tasks', () => {
     await supertest(app.getHttpServer()).post('/tasks').send({ issue: '태스크' }).expect(503);
 
     expect(mockOrchestrator.dispatch).not.toHaveBeenCalled();
+  });
+});
+
+describe('GET /tasks/:id', () => {
+  let app: NestFastifyApplication;
+
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    mockTasksService.findById.mockResolvedValue(mockTask);
+
+    const module: TestingModule = await Test.createTestingModule({
+      controllers: [TasksController],
+      providers: [
+        { provide: TasksService, useValue: mockTasksService },
+        { provide: OrchestratorService, useValue: mockOrchestrator },
+      ],
+    }).compile();
+
+    app = module.createNestApplication<NestFastifyApplication>(new FastifyAdapter());
+    await app.init();
+    await app.getHttpAdapter().getInstance().ready();
+  });
+
+  afterEach(async () => {
+    await app.close();
+  });
+
+  it('존재하는 task → 200 + 전체 필드 반환', async () => {
+    const res = await supertest(app.getHttpServer()).get(`/tasks/${VALID_UUID}`).expect(200);
+
+    expect(res.body).toMatchObject({
+      id: VALID_UUID,
+      issue: '로그인 기능 구현',
+      workspaceId: 'default',
+      status: 'pending',
+    });
+    expect(mockTasksService.findById).toHaveBeenCalledWith(VALID_UUID);
+  });
+
+  it('존재하지 않는 task → 404', async () => {
+    mockTasksService.findById.mockResolvedValue(undefined);
+    await supertest(app.getHttpServer()).get(`/tasks/${VALID_UUID}`).expect(404);
+  });
+
+  it('UUID 형식 아님 → 400', async () => {
+    await supertest(app.getHttpServer()).get('/tasks/not-a-uuid').expect(400);
+    expect(mockTasksService.findById).not.toHaveBeenCalled();
   });
 });

@@ -20,11 +20,17 @@
 ### In Progress
 - (없음)
 
-### Phase 5 완료 항목
-- `CLAUDE_BIN` 환경변수화 (`ClaudeAdapter` — 하드코딩 'claude' → `process.env.CLAUDE_BIN ?? 'claude'`)
-- `.env.example` / `apps/api/.env.example` — `CLAUDE_BIN`, `SYNAPSE_API_URL` 항목 추가
-- `AgentsController` — `safeParse` 패턴 적용 (Zod 에러 → 400 BadRequest)
-- `test/agents-run.spec.ts` 추가 — `POST /agents/run` E2E 7케이스 (29 tests all passed)
+### Phase 5+6 완료 항목
+- `CLAUDE_BIN` 환경변수화 (`ClaudeAdapter`)
+- `AgentsController` — `safeParse` 패턴 (Zod 에러 → 400), `GET /agents/status` 추가
+- `AgentRunnerService` — `running` Map 추적, `getRunningAgents()` 공개 메서드
+- `TasksService.findById()` + `TasksController GET /tasks/:id` (200/404/400)
+- `test/agents-run.spec.ts` — `POST /agents/run` 7케이스 + `GET /agents/status` 2케이스
+- `test/tasks.spec.ts` — `GET /tasks/:id` 3케이스 추가 (34 tests all passed)
+- `apps/api/Dockerfile` — node-pty 빌드 의존성 포함 멀티스테이지 빌드
+- `apps/web/Dockerfile` — Next.js standalone 멀티스테이지 빌드
+- `apps/web/next.config.mjs` — `NEXT_OUTPUT=standalone` 환경변수 기반 조건부 출력
+- `docker-compose.yml` — `api` + `web` 서비스 추가 (db healthcheck 의존성)
 
 ### Broken
 - 일반 `pnpm` 명령은 현재 `minimumReleaseAge` 정책이 기존 NestJS 최신 lockfile 엔트리를 막을 수 있음

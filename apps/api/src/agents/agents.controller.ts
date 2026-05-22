@@ -1,4 +1,4 @@
-import { Controller, Post, Body, HttpCode, BadRequestException } from '@nestjs/common';
+import { Controller, Post, Get, Body, HttpCode, BadRequestException } from '@nestjs/common';
 import { z } from 'zod';
 import { AgentRunnerService } from './agent-runner.service';
 import { EventsGateway } from '@/events/events.gateway';
@@ -40,5 +40,10 @@ export class AgentsController {
     });
 
     return { agentId, workspaceId };
+  }
+
+  @Get('status')
+  status() {
+    return { running: this.runner.getRunningAgents() };
   }
 }

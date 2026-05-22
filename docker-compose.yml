@@ -16,5 +16,39 @@ services:
       retries: 10
       start_period: 10s
 
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    ports:
+      - "3011:3011"
+    environment:
+      NODE_ENV: production
+      PORT: 3011
+      DATABASE_URL: postgresql://synapse:synapse@db:5432/synapse
+      CORS_ORIGIN: http://localhost:3010
+      SYNAPSE_API_URL: http://api:3011
+      # Claude CLI 바이너리 경로 — 컨테이너에 claude CLI가 설치된 경우 설정
+      # CLAUDE_BIN: /usr/local/bin/claude
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:3011
+    ports:
+      - "3010:3010"
+    environment:
+      NODE_ENV: production
+      PORT: 3010
+    depends_on:
+      - api
+    restart: unless-stopped
+
 volumes:
   postgres_data:

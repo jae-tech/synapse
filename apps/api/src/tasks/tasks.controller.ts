@@ -1,10 +1,13 @@
 import {
   Controller,
   Post,
+  Get,
+  Param,
   Body,
   HttpCode,
   ServiceUnavailableException,
   BadRequestException,
+  NotFoundException,
 } from '@nestjs/common';
 import { z } from 'zod';
 import { TasksService } from './tasks.service';
@@ -44,5 +47,27 @@ export class TasksController {
     });
 
     return { id: task.id, status: task.status };
+  }
+
+  @Get(':id')
+  async findOne(@Param('id') id: string) {
+    const uuidResult = z.string().uuid().safeParse(id);
+    if (!uuidResult.success) {
+      throw new BadRequestException('유효하지 않은 task ID 형식입니다');
+    }
+
+    const task = await this.tasksService.findById(id);
+    if (!task) {
+      throw new NotFoundException(`task ${id}를 찾을 수 없습니다`);
+    }
+
+    return {
+      id: task.id,
+      issue: task.issue,
+      workspaceId: task.workspaceId,
+      status: task.status,
+      createdAt: task.createdAt,
+      updatedAt: task.updatedAt,
+    };
   }
 }

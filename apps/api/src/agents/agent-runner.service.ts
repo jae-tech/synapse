@@ -15,17 +15,31 @@ export interface AgentRunRequest {
   onPtyData?: (chunk: string) => void;
 }
 
+export interface AgentStatus {
+  agentId: string;
+  workspaceId: string;
+  startedAt: string;
+}
+
 @Injectable()
 export class AgentRunnerService {
   private readonly logger = new Logger(AgentRunnerService.name);
+  private readonly running = new Map<string, AgentStatus>();
 
   constructor(
     private readonly adapter: ClaudeAdapter,
     private readonly eventsService: EventsService,
   ) {}
 
+  getRunningAgents(): AgentStatus[] {
+    return Array.from(this.running.values());
+  }
+
   async run(req: AgentRunRequest): Promise<AgentResult> {
     const { agentId, workspaceId, prompt, workdir, timeoutMs, env, onPtyData } = req;
+
+    const startedAt = new Date().toISOString();
+    this.running.set(agentId, { agentId, workspaceId, startedAt });
 
     // spawn 직전에 agent:start 이벤트 ingest → VirtualOffice 캐릭터 즉시 활성화 (D8)
     await this.eventsService.ingest({
@@ -33,7 +47,7 @@ export class AgentRunnerService {
       agentId,
       type: 'agent:start',
       payload: {},
-      timestamp: new Date().toISOString(),
+      timestamp: startedAt,
       workspaceId,
     });
 
@@ -52,6 +66,7 @@ export class AgentRunnerService {
     try {
       const result = await this.adapter.run(prompt, options);
 
+      this.running.delete(agentId);
       await this.eventsService.ingest({
         id: randomUUID(),
         agentId,
@@ -63,6 +78,7 @@ export class AgentRunnerService {
 
       return result;
     } catch (err) {
+      this.running.delete(agentId);
       this.logger.error(`AgentRunner[${agentId}] 실패`, err);
 
       await this.eventsService
@@ -75,7 +91,6 @@ export class AgentRunnerService {
           workspaceId,
         })
         .catch(() => {
-          // ingest 자체 실패 시 로그만 남기고 re-throw는 하지 않는다
           this.logger.warn(`AgentRunner[${agentId}] error 이벤트 ingest 실패`);
         });
 

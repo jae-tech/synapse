@@ -1,17 +1,15 @@
 # Next Task
 
 ### Goal
-- Phase 6 — 프로덕션 준비 + 통합 검증
-  - Docker Compose 풀스택 실행 (`api` + `web` + `postgres`) 검증
-  - `CLAUDE_BIN` 실제 바이너리 E2E 연기 테스트 (CI skip 표시)
-  - `GET /tasks/:id` + `GET /agents/status` API 엔드포인트 추가
-  - `VirtualOffice` 픽셀아트 오피스 내 에이전트 클릭 → 터미널 연동 UX 개선
+- Phase 7 — AGENTS.md 정비 + README 작성 + PR 준비
+  - `AGENTS.md` 최신 아키텍처 반영 (Phase 5~6 추가 엔드포인트, Docker 실행 방법)
+  - 루트 `README.md` 작성 (빠른 시작, 환경변수 표, 아키텍처 다이어그램)
+  - `main` 브랜치로 PR 생성
 
 ### Requirements
-- `docker-compose.yml` — `api`, `web` 서비스 추가 (현재 postgres만 존재)
-- `CLAUDE_BIN` 환경변수 Docker 레이어 주입 방법 문서화
-- `GET /tasks/:id` 상태 조회 API (TasksController 확장)
+- `AGENTS.md` — 새 API 엔드포인트 (`GET /tasks/:id`, `GET /agents/status`) 반영
+- `README.md` — `docker compose up`, `pnpm dev`, 환경변수 설명 포함
+- PR 제목·설명 요약 (Phase 1~6 전체 변경사항)
 
 ### Warnings
-- node-pty는 컨테이너 내부에서 conpty 미지원 (Linux PTY 모드로 자동 전환되므로 문제없음)
-- Next.js standalone 빌드 시 `apps/web/.next/standalone` 경로 주의
+- `main` 브랜치 보호 정책 확인 필요 — squash merge 권장

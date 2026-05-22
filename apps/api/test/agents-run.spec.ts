@@ -9,6 +9,7 @@ import { EventsGateway } from '@/events/events.gateway';
 
 const mockRunner = {
   run: vi.fn(),
+  getRunningAgents: vi.fn().mockReturnValue([]),
 };
 
 const mockGateway = {
@@ -135,5 +136,44 @@ describe('POST /agents/run', () => {
       workdir: '/tmp/project',
       timeoutMs: 60000,
     });
+  });
+});
+
+describe('GET /agents/status', () => {
+  let app: NestFastifyApplication;
+
+  beforeEach(async () => {
+    vi.clearAllMocks();
+
+    const module: TestingModule = await Test.createTestingModule({
+      controllers: [AgentsController],
+      providers: [
+        { provide: AgentRunnerService, useValue: mockRunner },
+        { provide: EventsGateway, useValue: mockGateway },
+      ],
+    }).compile();
+
+    app = module.createNestApplication<NestFastifyApplication>(new FastifyAdapter());
+    await app.init();
+    await app.getHttpAdapter().getInstance().ready();
+  });
+
+  afterEach(async () => {
+    await app.close();
+  });
+
+  it('실행 중인 에이전트 없음 → { running: [] }', async () => {
+    mockRunner.getRunningAgents.mockReturnValue([]);
+    const res = await supertest(app.getHttpServer()).get('/agents/status').expect(200);
+    expect(res.body).toEqual({ running: [] });
+  });
+
+  it('실행 중인 에이전트 있음 → 목록 반환', async () => {
+    const agent = { agentId: 'backend', workspaceId: 'default', startedAt: '2026-01-01T00:00:00Z' };
+    mockRunner.getRunningAgents.mockReturnValue([agent]);
+
+    const res = await supertest(app.getHttpServer()).get('/agents/status').expect(200);
+    expect(res.body.running).toHaveLength(1);
+    expect(res.body.running[0]).toMatchObject({ agentId: 'backend' });
   });
 });
