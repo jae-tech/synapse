@@ -1,26 +1,28 @@
 import { z } from 'zod';
 
-export const AgentRoleSchema = z.enum([
-  'pm',
-  'backend',
-  'frontend',
-  'qa',
-  'reviewer',
-  'devops',
-]);
+export const AgentRoleSchema = z.enum(['pm', 'backend', 'frontend', 'qa', 'reviewer', 'devops']);
 
 export const AgentEventSchema = z.object({
   id: z.string().default(() => crypto.randomUUID()),
-  agentId: z.string().min(1).max(50).regex(/^[a-z][a-z0-9-]*$/, 'agentId must be lowercase alphanumeric with hyphens'),
-  type: z.enum(['tool_use', 'tool_result', 'thinking', 'status', 'file_change', 'bash', 'commit']),
+  agentId: z
+    .string()
+    .min(1)
+    .max(50)
+    .regex(/^[a-z][a-z0-9-]*$/, 'agentId must be lowercase alphanumeric with hyphens'),
+  type: z.enum([
+    'tool_use',
+    'tool_result',
+    'thinking',
+    'status',
+    'file_change',
+    'bash',
+    'commit',
+    'agent:start',
+    'agent:complete',
+    'agent:error',
+  ]),
   tool: z.string().optional(),
-  payload: z.object({
-    input: z.string().max(500).optional(),
-    output: z.string().max(500).optional(),
-    content: z.string().max(500).optional(),
-    file: z.string().max(500).optional(),
-    command: z.string().max(500).optional(),
-  }),
+  payload: z.record(z.string(), z.unknown()),
   timestamp: z.string().datetime(),
   workspaceId: z.string().default('default'),
 });

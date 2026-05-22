@@ -24,6 +24,9 @@ interface AgentStore {
   connectionError: string | null;
   setConnected: (v: boolean) => void;
   setConnectionError: (err: string | null) => void;
+  // agentId별 PTY 출력 누적 버퍼
+  ptyBuffers: Record<string, string>;
+  appendPty: (agentId: string, chunk: string) => void;
 }
 
 export const DONE_IDLE_TIMEOUT_MS = 30 * 60 * 1000;
@@ -48,8 +51,11 @@ const initialAgentState = (): AgentState => ({
 });
 
 function deriveStatus(event: AgentEvent): AgentState['status'] {
-  if (event.type === 'status' && event.payload.content === 'done') return 'done';
-  if (event.type === 'status' && event.payload.content === 'error') return 'error';
+  if (event.type === 'agent:complete') return 'done';
+  if (event.type === 'agent:error') return 'error';
+  if (event.type === 'agent:start') return 'working';
+  if (event.type === 'status' && event.payload['content'] === 'done') return 'done';
+  if (event.type === 'status' && event.payload['content'] === 'error') return 'error';
   if (event.type === 'commit') return 'done';
   return 'working';
 }
@@ -60,9 +66,18 @@ export const useAgentStore = create<AgentStore>((set, get) => ({
   seenIds: new Set(),
   connected: false,
   connectionError: null,
+  ptyBuffers: {},
 
   setConnected: (v) => set({ connected: v, connectionError: v ? null : get().connectionError }),
   setConnectionError: (err) => set({ connectionError: err }),
+  appendPty: (agentId, chunk) =>
+    set((s) => ({
+      ptyBuffers: {
+        ...s.ptyBuffers,
+        // 최근 64KB만 유지 — 무한 누적 방지
+        [agentId]: ((s.ptyBuffers[agentId] ?? '') + chunk).slice(-65536),
+      },
+    })),
 
   addEvent: (event) =>
     set((state) => {
@@ -120,7 +135,9 @@ export function useGroupedAgents(): Record<string, GroupedAgent> {
     }
     for (const g of Object.values(grouped)) {
       const maxPriority = Math.max(...g.instances.map((i) => STATUS_PRIORITY[i.status] ?? 0));
-      const summaryStatus = (Object.entries(STATUS_PRIORITY).find(([, v]) => v === maxPriority)?.[0] ?? 'idle') as AgentState['status'];
+      const summaryStatus = (Object.entries(STATUS_PRIORITY).find(
+        ([, v]) => v === maxPriority,
+      )?.[0] ?? 'idle') as AgentState['status'];
       g.summaryStatus = summaryStatus;
     }
     return grouped;

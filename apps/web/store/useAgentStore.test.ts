@@ -84,7 +84,12 @@ describe('setReplay', () => {
   it('ASC 순서 → 마지막 이벤트 상태가 최종 적용 (E2-2)', () => {
     const events: AgentEvent[] = [
       makeEvent({ agentId: 'backend-1', type: 'tool_use', timestamp: '2026-01-01T00:00:00Z' }),
-      makeEvent({ agentId: 'backend-1', type: 'status', payload: { content: 'done' }, timestamp: '2026-01-01T01:00:00Z' }),
+      makeEvent({
+        agentId: 'backend-1',
+        type: 'status',
+        payload: { content: 'done' },
+        timestamp: '2026-01-01T01:00:00Z',
+      }),
     ];
     useAgentStore.getState().setReplay(events);
 

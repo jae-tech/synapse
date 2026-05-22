@@ -14,20 +14,16 @@ export class ClaudeAdapter implements AgentAdapter {
       let child: pty.IPty | undefined;
 
       try {
-        child = pty.spawn(
-          'claude',
-          ['--dangerously-skip-permissions', '-p', prompt],
-          {
-            name: 'xterm-color',
-            cwd: options.workdir,
-            env: {
-              ...process.env,
-              AGENT_ID: options.agentId,
-              SYNAPSE_API_URL: process.env.SYNAPSE_API_URL ?? 'http://localhost:3011',
-              ...options.env,
-            },
+        child = pty.spawn('claude', ['--dangerously-skip-permissions', '-p', prompt], {
+          name: 'xterm-color',
+          cwd: options.workdir,
+          env: {
+            ...process.env,
+            AGENT_ID: options.agentId,
+            SYNAPSE_API_URL: process.env.SYNAPSE_API_URL ?? 'http://localhost:3011',
+            ...options.env,
           },
-        );
+        });
       } catch (err) {
         reject(err);
         return;

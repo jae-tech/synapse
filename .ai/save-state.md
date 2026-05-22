@@ -17,11 +17,18 @@
 - `claude-adapter.spec.ts` 추가 및 API 테스트 통과 (12 passed)
 
 ### In Progress
-- Phase 3A T5 대기: AgentRunnerService(node-pty 생명주기 + spawn 즉시 emit)
+- Phase 3C 대기: TasksModule + OrchestratorService 구현 (POST /tasks → PM 에이전트 → 서브태스크 파견)
 
 ### Broken
 - 일반 `pnpm` 명령은 현재 `minimumReleaseAge` 정책이 기존 NestJS 최신 lockfile 엔트리를 막을 수 있음
 - 검증 시 임시로 `pnpm --config.minimumReleaseAge=0 ...` 사용
+
+- Phase 3A T5: `AgentRunnerService` 구현 + `agent-runner.spec.ts` 추가 (17 passed)
+- Phase 3B: Web UI 연동 완료 (web build 성공, 10 passed)
+- Phase 3A T6: `AgentsModule` + `AgentsController(POST /agents/run)` + `AppModule` 통합
+- `@synapse/schemas` payload 타입 확장 (`z.record`) + agent 이벤트 타입 3종 추가
+- `EventsModule` exports 추가 (`EventsService`, `EventsGateway`)
+- `zod` 직접 의존성 `@synapse/api`에 추가
 
 ### Modified Files
 - `packages/schemas/src/index.ts`
@@ -34,7 +41,20 @@
 - `apps/api/drizzle/meta/_journal.json`
 - `apps/api/src/agents/adapters/agent-adapter.interface.ts`
 - `apps/api/src/agents/adapters/claude.adapter.ts`
+- `apps/api/src/agents/agent-runner.service.ts`
+- `apps/api/src/agents/agents.module.ts`
+- `apps/api/src/agents/agents.controller.ts`
+- `apps/api/src/app.module.ts`
+- `apps/api/src/events/events.module.ts`
+- `apps/api/package.json`
+- `packages/schemas/src/index.ts`
 - `apps/api/test/claude-adapter.spec.ts`
+- `apps/api/test/agent-runner.spec.ts`
+- `apps/web/components/IssueInput.tsx`
+- `apps/web/components/AgentTerminal.tsx`
+- `apps/web/components/VirtualOffice.tsx`
+- `apps/web/store/useAgentStore.ts`
+- `apps/web/lib/useAgentSocket.ts`
 - `apps/api/package.json`
 - `apps/api/tsconfig.json`
 - `apps/api/vitest.config.ts`

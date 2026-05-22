@@ -1,26 +1,30 @@
 # Next Task
 
 ### Goal
-- Phase 3A T5 구현 — AgentRunnerService(node-pty 생명주기 + spawn 즉시 emit)
+- Phase 3C — TasksModule + OrchestratorService 구현
+  - T11: `POST /tasks` 엔드포인트 (TasksController + TasksModule)
+  - T12: OrchestratorService — PM 에이전트 호출 + JSON 파싱 + 서브태스크 병렬 파견
 
 ### Requirements
-- `apps/api/src/agents/agent-runner.service.ts` 신규 구현
-- 에이전트 실행 직전에 `agent:start` 이벤트 ingest (D8)
-- adapter `run()`의 `onPtyData`를 `pty:data` Socket emit으로 중계
-- timeout/exit 동작은 adapter 결과를 그대로 반영
-- 이후 orchestrator에서 adapter 선택 주입이 가능하도록 의존성 구조 단순 유지
+- `apps/api/src/tasks/tasks.controller.ts` — POST /tasks (Zod 검증 → DB insert → void orchestrator.dispatch() → 202)
+- `apps/api/src/tasks/tasks.module.ts` — TasksController + OrchestratorService + AgentsModule import
+- `apps/api/src/orchestrator/orchestrator.service.ts`
+  - `dispatch(task)` — PM 에이전트(ClaudeAdapter)를 `-p "PM: 다음 이슈를 서브태스크 JSON으로 분해해줘: ..."` 형태로 실행
+  - PM 출력 JSON 파싱 실패 → task.status='failed' + type:'agent:error' 이벤트 emit (D9)
+  - 파싱 성공 → 서브태스크 목록을 `Promise.allSettled`로 병렬 AgentRunnerService 실행
+  - 각 서브태스크는 role에 맞는 agentId 사용 (예: 'backend', 'frontend')
+- `AppModule`에 `TasksModule` import
+- DB insert: `apps/api/src/db/schema.ts`의 `tasks` 테이블 사용
 
 ### Files To Inspect
-- `PLAN.md` — AgentRunnerService 설계 섹션
-- `apps/api/src/events/events.gateway.ts` — emit/broadcast 패턴 참고
-- `apps/api/src/events/events.service.ts` — DI/service 스타일 참고
-- `apps/api/test/` — Vitest + Nest TestingModule mock 스타일 참고
-- `apps/api/src/agents/adapters/` — 새 adapter 인터페이스/구현 참고
+- `apps/api/src/db/schema.ts` — tasks 테이블 컬럼 확인
+- `apps/api/src/agents/agents.module.ts` — AgentRunnerService export 확인
+- `apps/api/src/agents/agent-runner.service.ts` — run() 시그니처
+- `apps/api/test/events.spec.ts` — HTTP 테스트 스타일 참고
+- `AGENTS.md` §Task 흐름 — 설계 의도 재확인
 
 ### Warnings
-- `pnpm` 일반 실행은 현재 supply-chain `minimumReleaseAge` 정책으로 실패할 수 있음
-- 필요한 pnpm 명령에는 `--config.minimumReleaseAge=0`을 붙여 검증 완료
-- pnpm 11은 root `package.json`의 `pnpm.onlyBuiltDependencies`를 무시함
-- 실제 build script 승인은 `pnpm-workspace.yaml`의 `allowBuilds`와 `pnpm.toml`에 반영됨
-- `AGENTS.md`에는 이번 세션 전부터 formatting 변경이 남아 있음
-- API `nest build`는 Drizzle builder 타입의 TS2883 declaration-portability 진단 때문에 `apps/api/tsconfig.json`에서 declaration emit을 비활성화함
+- OrchestratorService는 PM JSON 파싱 SPOF → 반드시 try/catch + graceful fallback
+- PM 프롬프트 응답 형식은 아직 미정 — 우선 `[{"role":"backend","prompt":"..."}]` 형태로 가정
+- `pnpm` 명령에 `--config.minimumReleaseAge=0` 필요
+- fire-and-forget: TasksController는 202 즉시 반환, orchestrator는 백그라운드 실행
