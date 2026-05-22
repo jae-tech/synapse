@@ -1,3 +1,17 @@
 packages:
   - "apps/*"
   - "packages/*"
+allowBuilds:
+  '@nestjs/core': true
+  '@swc/core': true
+  esbuild: true
+  node-pty: true
+  sharp: true
+minimumReleaseAgeExclude:
+  - '@nestjs/common@11.1.23'
+  - '@nestjs/core@11.1.23'
+  - '@nestjs/platform-fastify@11.1.23'
+  - '@nestjs/platform-socket.io@11.1.23'
+  - '@nestjs/testing@11.1.23'
+  - '@nestjs/websockets@11.1.23'
+  - vite@8.0.14

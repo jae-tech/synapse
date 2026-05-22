@@ -4,6 +4,15 @@
 
 ---
 
+## 작업 종료 체크리스트
+
+코드 변경이 있는 작업을 마칠 때 반드시 순서대로 실행한다:
+
+1. `pnpm format` — prettier 포맷
+2. `.ai/` 상태 파일 업데이트 (AGENTS.md 참조)
+
+---
+
 ## Skill routing
 
 사용자의 요청이 아래 skill과 매칭되면 Skill tool로 호출한다.

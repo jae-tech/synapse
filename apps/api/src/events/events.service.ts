@@ -1,8 +1,8 @@
 import { Inject, Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
 import { desc, eq } from 'drizzle-orm';
 import { AgentEvent } from '@synapse/schemas';
-import { DB_TOKEN, DrizzleDb } from '../db/index';
-import { events } from '../db/schema';
+import { DB_TOKEN, DrizzleDb } from '@/db/index';
+import { events } from '@/db/schema';
 import { EventsGateway } from './events.gateway';
 
 @Injectable()

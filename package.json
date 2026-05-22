@@ -4,9 +4,12 @@
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
-    "test": "turbo run test"
+    "test": "turbo run test",
+    "format": "prettier --write \"apps/**/*.{ts,tsx,js,mjs}\" \"packages/**/*.ts\"",
+    "format:check": "prettier --check \"apps/**/*.{ts,tsx,js,mjs}\" \"packages/**/*.ts\""
   },
   "devDependencies": {
+    "prettier": "^3.8.3",
     "turbo": "^2.9.14"
   },
   "packageManager": "pnpm@11.2.2+sha512.36e6621fad506178936455e70247b8808ef4ec25797a9f437a93281a020484e2607f6a469a22e982987c3dbb8866e3071514ab10a4a1749e06edcd1ec118436f",

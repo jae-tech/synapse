@@ -6,11 +6,7 @@ export const metadata: Metadata = {
   description: 'Watch AI agents collaborate in real time',
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ko">
       <body>{children}</body>

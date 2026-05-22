@@ -1,21 +1,15 @@
 # Next Task
 
 ### Goal
-- Phase 3 구현 시작 — T1(schemas) + T3(node-pty 의존성 설치) 병렬 착수
+- Phase 7 — AGENTS.md 정비 + README 작성 + PR 준비
+  - `AGENTS.md` 최신 아키텍처 반영 (Phase 5~6 추가 엔드포인트, Docker 실행 방법)
+  - 루트 `README.md` 작성 (빠른 시작, 환경변수 표, 아키텍처 다이어그램)
+  - `main` 브랜치로 PR 생성
 
 ### Requirements
-- `packages/schemas/src/index.ts`에 `TaskSchema`, `CreateTaskSchema` Zod 스키마 추가
-- `pnpm --filter @synapse/api add node-pty@latest` + Windows node-gyp 빌드 확인
-- `pnpm --filter @synapse/web add @xterm/xterm@latest @xterm/addon-fit@latest`
-- root `package.json`의 `pnpm.onlyBuiltDependencies`에 `node-pty` 추가
-
-### Files To Inspect
-- `packages/schemas/src/index.ts` — 기존 스키마 구조 확인
-- `apps/api/package.json` — 현재 의존성 확인
-- `apps/web/package.json` — 현재 의존성 확인
-- `package.json` (root) — `pnpm.onlyBuiltDependencies` 확인
+- `AGENTS.md` — 새 API 엔드포인트 (`GET /tasks/:id`, `GET /agents/status`) 반영
+- `README.md` — `docker compose up`, `pnpm dev`, 환경변수 설명 포함
+- PR 제목·설명 요약 (Phase 1~6 전체 변경사항)
 
 ### Warnings
-- node-pty는 네이티브 빌드 필요 (Windows: Visual Studio Build Tools 또는 windows-build-tools)
-- `workspace:*` 프로토콜 금지, `link:` 프로토콜 사용
-- schemas 변경 후 반드시 `pnpm --filter @synapse/schemas build` 실행
+- `main` 브랜치 보호 정책 확인 필요 — squash merge 권장

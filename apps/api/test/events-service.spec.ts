@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Test } from '@nestjs/testing';
-import { EventsService } from '../src/events/events.service';
-import { EventsGateway } from '../src/events/events.gateway';
-import { DB_TOKEN } from '../src/db/index';
-import type { Event } from '../src/db/schema';
+import { EventsService } from '@/events/events.service';
+import { EventsGateway } from '@/events/events.gateway';
+import { DB_TOKEN } from '@/db/index';
+import type { Event } from '@/db/schema';
 
 const mockGateway = { broadcast: vi.fn() };
 
@@ -83,8 +83,9 @@ describe('EventsService.getRecentEvents', () => {
 
     const result = await service.getRecentEvents();
     for (let i = 0; i < result.length - 1; i++) {
-      expect(new Date(result[i].timestamp).getTime())
-        .toBeLessThanOrEqual(new Date(result[i + 1].timestamp).getTime());
+      expect(new Date(result[i].timestamp).getTime()).toBeLessThanOrEqual(
+        new Date(result[i + 1].timestamp).getTime(),
+      );
     }
   });
 

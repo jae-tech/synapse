@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "@synapse/schemas": "link:../../packages/schemas",
+    "@xterm/addon-fit": "^0.11.0",
+    "@xterm/xterm": "^6.0.0",
     "next": "^16.2.6",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
@@ -22,6 +24,7 @@
     "@types/react-dom": "^19.2.3",
     "@vitest/coverage-v8": "^4.1.7",
     "typescript": "^6.0.3",
+    "vite": "^8.0.14",
     "vitest": "^4.1.7"
   }
 }
