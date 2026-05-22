@@ -2,17 +2,30 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
-import { getRepositoryToken } from '@nestjs/typeorm';
 import supertest from 'supertest';
 import { EventsController } from '../src/events/events.controller';
 import { EventsService } from '../src/events/events.service';
 import { EventsGateway } from '../src/events/events.gateway';
-import { EventEntity } from '../src/events/event.entity';
+import { DB_TOKEN } from '../src/db/index';
 
-const mockRepo = {
-  create: vi.fn((data) => data),
-  save: vi.fn().mockResolvedValue({}),
-  find: vi.fn().mockResolvedValue([]),
+function makeSelectChain(resolvedValue: unknown[] = []) {
+  const chain = {
+    from: vi.fn(),
+    where: vi.fn(),
+    orderBy: vi.fn(),
+    limit: vi.fn().mockResolvedValue(resolvedValue),
+  };
+  chain.from.mockReturnValue(chain);
+  chain.where.mockReturnValue(chain);
+  chain.orderBy.mockReturnValue(chain);
+  return chain;
+}
+
+const mockDb = {
+  insert: vi.fn().mockReturnValue({
+    values: vi.fn().mockResolvedValue([]),
+  }),
+  select: vi.fn().mockReturnValue(makeSelectChain()),
 };
 
 const mockServer = { emit: vi.fn() };
@@ -26,13 +39,15 @@ describe('POST /events', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
+    mockDb.insert.mockReturnValue({ values: vi.fn().mockResolvedValue([]) });
+    mockDb.select.mockReturnValue(makeSelectChain());
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [EventsController],
       providers: [
         EventsService,
         { provide: EventsGateway, useValue: mockGateway },
-        { provide: getRepositoryToken(EventEntity), useValue: mockRepo },
+        { provide: DB_TOKEN, useValue: mockDb },
       ],
     }).compile();
 
@@ -60,7 +75,7 @@ describe('POST /events', () => {
       .send(validEvent)
       .expect(201);
 
-    expect(mockRepo.save).toHaveBeenCalledTimes(1);
+    expect(mockDb.insert).toHaveBeenCalledTimes(1);
     expect(mockGateway.broadcast).toHaveBeenCalledTimes(1);
   });
 
@@ -70,7 +85,7 @@ describe('POST /events', () => {
       .send({})
       .expect(400);
 
-    expect(mockRepo.save).not.toHaveBeenCalled();
+    expect(mockDb.insert).not.toHaveBeenCalled();
   });
 
   it('agentId regex 검증: backend-1 허용 → 201', async () => {
@@ -116,7 +131,9 @@ describe('POST /events', () => {
   });
 
   it('DB 저장 실패 → 503', async () => {
-    mockRepo.save.mockRejectedValueOnce(new Error('DB down'));
+    mockDb.insert.mockReturnValue({
+      values: vi.fn().mockRejectedValue(new Error('DB down')),
+    });
 
     const event = {
       agentId: 'backend',
