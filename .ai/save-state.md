@@ -1,6 +1,7 @@
 # Save State
 
 ### Completed
+- Phase 3C: TasksModule (POST /tasks) + OrchestratorService (PM → 서브태스크 병렬 실행)
 - Phase 1: 기본 이벤트 수신/저장/broadcast (POST /events)
 - Phase 2: PostgreSQL persistence + Drizzle ORM 마이그레이션 + WebSocket replay
 - AGENTS.md 생성 (Claude + Codex 공용 규칙 통합)
@@ -17,7 +18,7 @@
 - `claude-adapter.spec.ts` 추가 및 API 테스트 통과 (12 passed)
 
 ### In Progress
-- Phase 3C 대기: TasksModule + OrchestratorService 구현 (POST /tasks → PM 에이전트 → 서브태스크 파견)
+- Phase 4: 디자인 시스템 + UI polish (globals.css 토큰, 컴포넌트 정리, 반응형)
 
 ### Broken
 - 일반 `pnpm` 명령은 현재 `minimumReleaseAge` 정책이 기존 NestJS 최신 lockfile 엔트리를 막을 수 있음
