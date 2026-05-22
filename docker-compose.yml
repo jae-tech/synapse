@@ -16,6 +16,17 @@ services:
       retries: 10
       start_period: 10s
 
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
   api:
     build:
       context: .
@@ -28,10 +39,14 @@ services:
       DATABASE_URL: postgresql://synapse:synapse@db:5432/synapse
       CORS_ORIGIN: http://localhost:3010
       SYNAPSE_API_URL: http://api:3011
+      WS_REDIS_ENABLED: "1"
+      WS_REDIS_URL: redis://redis:6379
       # Claude CLI 바이너리 경로 — 컨테이너에 claude CLI가 설치된 경우 설정
       # CLAUDE_BIN: /usr/local/bin/claude
     depends_on:
       db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     restart: unless-stopped
 
