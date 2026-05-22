@@ -1,6 +1,23 @@
 # Save State
 
 ### Completed
+- 후보 B 1차 구현 완료: Redis pub/sub Socket.IO adapter 도입 (`WS_REDIS_ENABLED` 기반 조건부 활성화)
+- `RedisIoAdapter` 추가 및 Nest bootstrap에서 Redis 연결/종료 훅 처리
+- `docker-compose.yml`에 `redis` 서비스 추가, API에서 Redis adapter 기본 활성화 구성
+- API 회귀 테스트 통과 (`pnpm --filter @synapse/api test` 34 passed)
+- Phase 9A E2E 확장 완료: 제출 성공/제출 실패/소켓 연결 실패 배너/에이전트 로그-터미널 탭 토글 케이스 추가
+- Playwright E2E 안정화: 기존 실행 중 dev 서버 재사용 환경에서도 동작하도록 케이스 보정
+- `useAgentSocket`에 `?e2e_socket_error=1` 강제 에러 분기 추가 (E2E 전용)
+- PixelOffice 디자인 2차 보강: 시계, 천장 조명, 정수기, 책장, 식물, 하단 오피스맵/브리핑/이벤트 보드 디테일 추가
+- PixelOffice 씬을 레퍼런스 구도 기반으로 전면 교체 (HQ 간판, 회의실, 라운지, 5개 작업실, 하단 패널)
+- 에이전트 상태 애니메이션은 유지하면서 새 레이아웃 좌표로 재매핑
+- Web 메인 페이지 디자인 1차 리뉴얼 (레퍼런스 이미지 톤 반영)
+- `globals.css` 전면 교체: 네이비 그라데이션 배경, 글래스 패널, 좌/중/우 3패널 시각 스타일 강화
+- 에이전트 카드/입력 폼/로그 타임라인 스타일을 레퍼런스 레이아웃에 맞게 재정렬
+- Phase 9A 시작: Playwright E2E 스모크 테스트 도입 (`@synapse/web`)
+- `apps/web/playwright.config.ts` 추가 (`localhost` baseURL + Next dev webServer)
+- `apps/web/e2e/issue-input.spec.ts` 추가 (POST `/tasks` route mock 기반 제출 성공 검증)
+- `apps/web` 스크립트에 `test:e2e` 추가, Chromium 설치 후 E2E 1건 통과 확인
 - Phase 3C: TasksModule (POST /tasks) + OrchestratorService (PM → 서브태스크 병렬 실행)
 - Phase 1: 기본 이벤트 수신/저장/broadcast (POST /events)
 - Phase 2: PostgreSQL persistence + Drizzle ORM 마이그레이션 + WebSocket replay
@@ -23,7 +40,8 @@
 - `README.md` — CI 배지 추가 (GitHub Actions 링크)
 
 ### In Progress
-- (없음)
+- 레퍼런스 대비 픽셀 오피스 내부 디테일 미세 조정 (가구 비율, 텍스트 위치, 창문/벽면 디테일)
+- Redis adapter 멀티 인스턴스 실제 통합 smoke 검증 (2개 API 프로세스 교차 broadcast 확인)
 
 ### Phase 7 완료 항목
 - `README.md` 전면 재작성 — 빠른 시작, Docker Compose, API 엔드포인트 표, 환경변수 표, 기술 스택
@@ -58,6 +76,22 @@
 - `zod` 직접 의존성 `@synapse/api`에 추가
 
 ### Modified Files
+- `apps/api/src/events/redis-io.adapter.ts`
+- `apps/api/src/main.ts`
+- `apps/api/package.json`
+- `apps/api/.env.example`
+- `.env.example`
+- `docker-compose.yml`
+- `pnpm-lock.yaml`
+- `apps/web/e2e/issue-input.spec.ts`
+- `apps/web/lib/useAgentSocket.ts`
+- `apps/web/playwright.config.ts`
+- `apps/web/components/PixelOffice.tsx`
+- `apps/web/app/globals.css`
+- `apps/web/package.json`
+- `apps/web/playwright.config.ts`
+- `apps/web/e2e/issue-input.spec.ts`
+- `pnpm-lock.yaml`
 - `packages/schemas/src/index.ts`
 - `packages/schemas/src/index.test.ts`
 - `packages/schemas/package.json`

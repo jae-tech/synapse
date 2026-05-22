@@ -47,3 +47,35 @@
 - PTY 청크는 `onPtyData` 콜백으로 즉시 전달해 후속 Socket streaming 경로에서 재사용 가능하게 구성
 - timeout은 `setTimeout` 기반으로 `SIGTERM` 후 2초 뒤 `kill()` fallback 적용 (Node spawn timeout 미신뢰)
 - 가용성 체크는 `claude --version`의 exit code(0/비0) 기준으로 판정
+
+## 2026-05-22 — Phase 9A Playwright E2E 도입 결정
+
+- 최초 E2E는 백엔드 종속도를 줄이기 위해 `POST /tasks`를 Playwright `page.route`로 mock 처리
+- Next.js 16 dev 서버의 `allowedDevOrigins` 제한을 피하기 위해 Playwright `baseURL/webServer.url`을 `127.0.0.1`이 아닌 `localhost`로 고정
+- 실행 진입점은 `@synapse/web` 스코프의 `test:e2e` 스크립트로 분리해 기존 Vitest 흐름과 독립 운영
+
+## 2026-05-22 — Web 디자인 1차 리뉴얼 결정
+
+- 페이지 구조는 유지하고 `apps/web/app/globals.css`를 전면 재정의해 레퍼런스 스타일(네이비 HQ 톤, 글래스 패널, 좌/중/우 하이콘트라스트)로 일괄 전환
+- 중앙 PixelOffice는 기존 로직을 유지해 실시간 상태 표현 안정성을 보존하고, 레이아웃/패널 시각 톤을 우선 맞추는 단계적 접근 채택
+
+## 2026-05-22 — PixelOffice 씬 전면 재구성 결정
+
+- `apps/web/components/PixelOffice.tsx`를 레퍼런스 구도에 맞춰 새로 작성 (상단 HQ/회의실/라운지 + 하단 5개 작업실 + PM 영역)
+- 기존 `agents` 상태 입력 인터페이스는 유지해 백엔드 이벤트 연동 영향 없이 UI 씬만 교체
+
+## 2026-05-22 — PixelOffice 2차 디테일 보강 결정
+
+- 레퍼런스 시각 요소를 반영해 시계/천장 조명/정수기/책장/화분/하단 정보 보드를 추가
+- 씬 전체 재작성 대신 기존 1차 레이아웃에 소품과 보조 패널을 누적해 단계적으로 완성도를 끌어올리는 방식 채택
+
+## 2026-05-22 — Phase 9A E2E 확장 안정화 결정
+
+- `apps/web/e2e/issue-input.spec.ts`에 제출 실패/연결 실패/터미널 토글 시나리오를 추가해 핵심 사용자 플로우를 E2E로 고정
+- 연결 실패 배너는 브라우저 네트워크 변동성 대신 `?e2e_socket_error=1` 강제 분기로 재현해 flaky 테스트를 제거
+
+## 2026-05-22 — Redis pub/sub Socket.IO adapter 도입 결정
+
+- `apps/api/src/events/redis-io.adapter.ts`를 추가해 Socket.IO adapter를 Redis(pub/sub)로 교체 가능한 구조로 확장
+- `WS_REDIS_ENABLED=1`일 때만 Redis adapter를 활성화하고, 기본은 in-memory adapter로 유지해 로컬 개발 호환성 보장
+- 앱 종료 시 Redis client `quit()`를 호출하도록 bootstrap 종료 훅을 연결해 연결 누수 방지

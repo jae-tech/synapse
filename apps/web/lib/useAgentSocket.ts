@@ -13,6 +13,12 @@ export function useAgentSocket() {
 
   useEffect(() => {
     const store = useAgentStore.getState;
+    if (window.location.search.includes('e2e_socket_error=1')) {
+      // E2E에서 연결 실패 UI를 안정적으로 검증하기 위한 강제 분기
+      store().setConnected(false);
+      store().setConnectionError('E2E forced socket error');
+      return;
+    }
 
     const socket = io(API_URL, {
       transports: ['websocket', 'polling'],
